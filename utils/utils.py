@@ -13,7 +13,7 @@ def load_data():
             "pcs": [],
             "services": [],
             "totals": {"pcs": 0, "services": 0, "all": 0},
-            "log_channel_id": None
+            "log_channel_id": None,
         }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -212,7 +212,7 @@ class Edit(View):
 
 
 
-async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, staff: str = "Yousef"):
+async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, staff: str = "Yousef",notes: str = None):
     amount_paid = int(amount_paid)
     today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
     today_channel = datetime.now().strftime("logs-%Y-%m-%d")
@@ -242,6 +242,8 @@ async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, sta
     embed.add_field(name="💰 Amount Paid", value=f"💷 {amount_paid} EGP", inline=True)
     embed.add_field(name="⏳ Time Equivalent",value=session_time,inline=True)
     embed.add_field(name="📅 Date", value=today_full, inline=True)
+    if notes:
+        embed.add_field(name="📝 Notes",value=notes,inline=True)
     embed.set_footer(text=f"Logged by: {staff} | Leader")
 
     await channel.send(embed=embed,view=Edit(len(data['pcs'])-1 ,'pcs'))

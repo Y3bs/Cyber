@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from pprint import pprint
 import json
+from datetime import datetime, timezone
 
 load_dotenv()
 DB_TOKEN = os.getenv('DB_TOKEN')
@@ -39,10 +40,20 @@ def update_service(update):
         print(f"Error updating service\nError: {e}")
         return {"matched": 0, "modified": 0, "error": str(e)}
 
+def delete_service(name):
+    try:
+        db.cyber.services.delete_one({"name": name})
+    except Exception as e:
+        print(f"Error deleting service\nError: {e}")
+
+
 def save_logs():
     try:
         with open('current_day.json','r',encoding='utf-8') as f:
             doc = json.load(f)
+
+        now = datetime.now(timezone.utc)
+        doc["date"] = now.strftime("%Y-%m-%d")  # e.g. 2025-09-29
         db.cyber.logs.insert_one(doc)
         default = {
             "pcs": [],

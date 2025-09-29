@@ -1,10 +1,23 @@
 {
-    "pcs": [],
+    "pcs": [
+        {
+            "pc": "PC 3",
+            "amount": 70,
+            "staff": "(\u2310\u25a0_\u25a0)\u2122",
+            "time": "29 Sep 2025 10:43 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 15,
+            "staff": "(\u2310\u25a0_\u25a0)\u2122",
+            "time": "29 Sep 2025 10:44 PM"
+        }
+    ],
     "services": [],
     "totals": {
-        "pcs": 0,
+        "pcs": 85,
         "services": 0,
-        "all": 0
+        "all": 85
     },
-    "log_channel_id": null
+    "log_channel_id": 1422305443656630352
 }

@@ -1,4 +1,3 @@
-import json, os, nextcord
 from random import choice
 from nextcord.ext import commands
 from nextcord import Color, Embed, SlashOption, slash_command, Interaction
@@ -16,14 +15,14 @@ class EnableService(commands.Cog):
         autocomplete=True,
         required=True
     )):
-
+        await interaction.response.defer(ephemeral=True)
         db.update_service({"name": service_name, "available": True})
         embed = Embed(
             title="✅ Service Enabled",
             description=f"Service **{service_name}** is now available",
             color=Color.green()
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @enable_service.on_autocomplete("service_name")
     async def service_name_autocomplete(self, interaction: Interaction, string: str):

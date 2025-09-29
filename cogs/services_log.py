@@ -60,17 +60,18 @@ class ServiceDropdown(Select):
         super().__init__(placeholder="Select a service...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: Interaction):
-        services = db.load_services()
         service_name = self.values[0]
-
         if service_name == "none":
             await interaction.response.send_message("⚠️ No services available.", ephemeral=True)
             return
 
-        service_info = services[service_name]
-        cost = service_info.get("cost", 0)
-        emoji = service_info.get("emoji", "🛠️")
-        is_custom = service_info.get("custom_cost")
+        service = db.db.cyber.services.find_one({"name": service_name})
+        if service is None:
+            await interaction.response.send_message("❌ Selected service not found.", ephemeral=True)
+            return
+        cost = service['cost']
+        emoji = service['emoji']
+        is_custom = service['custom_cost']
 
         # for custom cost services
         if is_custom:

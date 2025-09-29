@@ -16,14 +16,14 @@ class DisableService(commands.Cog):
         required=True
     )
     ):
-
+        await interaction.response.defer(ephemeral=True)
         db.update_service({"name": service_name, "available":False})
         embed = Embed(
             title="❌ Service Disabled",
             description=f"Service **{service_name}** is now unavailable",
             color=Color.red()
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @disable_service.on_autocomplete("service_name")
     async def service_name_autocomplete(self, interaction: Interaction, string: str):

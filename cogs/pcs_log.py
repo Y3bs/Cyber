@@ -11,13 +11,15 @@ class PCLog(Modal):
         super().__init__(title='Bill')
         self.pc = pc
         self.add_item(TextInput(label='💷 Cost (EGP)', style=TextInputStyle.short, required=True))
+        self.add_item(TextInput(label="📝 Notes",style=TextInputStyle.paragraph,required=False))
 
     async def callback(self, interaction: Interaction):
         cost = self.children[0].value
+        notes = self.children[1].value
         if not cost.isdigit():
             return await interaction.response.send_message('❌ Cost must be an integer 🔢', ephemeral=True)
         guild = interaction.guild
-        await use.log_session(guild, int(cost), self.pc,interaction.user.display_name)
+        await use.log_session(guild, int(cost), self.pc,interaction.user.display_name,notes)
 
 class PCsDropDown(Select):
     def __init__(self):

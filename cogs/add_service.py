@@ -1,6 +1,6 @@
 import json, os, nextcord
 from nextcord.ext import commands
-from nextcord import Color, Embed, slash_command, Interaction
+from nextcord import Color, Embed, InteractionResponded, slash_command, Interaction
 from nextcord import SlashOption
 import utils.database as db
 
@@ -34,6 +34,7 @@ class AddService(commands.Cog):
             required=True
         )
     ):
+        await interaction.response.defer(ephemeral=True)
         services = db.load_services()
 
         for service in services:
@@ -59,7 +60,7 @@ class AddService(commands.Cog):
         embed.add_field(name="🔨 Service Name",value=service_name)
         embed.add_field(name="💷 Cost",value =f"{cost} EGP")
         embed.add_field(name="🔓 availability",value="available" if availability else "Closed")
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed =embed,
             ephemeral=True
         )
