@@ -1,8 +1,9 @@
 from nextcord.ext import commands
 from nextcord import Embed, Interaction, TextInputStyle, slash_command, SelectOption, ButtonStyle
 from nextcord.ui import Select, View, Modal, button, TextInput
-from utils.utils import log_session, get_summary, load_data, reset_logs
+import utils.utils as use
 from datetime import datetime
+import utils.database as db
 import nextcord
 
 class PCLog(Modal):
@@ -16,7 +17,7 @@ class PCLog(Modal):
         if not cost.isdigit():
             return await interaction.response.send_message('❌ Cost must be an integer 🔢', ephemeral=True)
         guild = interaction.guild
-        await log_session(guild, int(cost), self.pc,interaction.user.display_name)
+        await use.log_session(guild, int(cost), self.pc,interaction.user.display_name)
 
 class PCsDropDown(Select):
     def __init__(self):
@@ -37,7 +38,7 @@ class PCv(View):
 
     @button(label="View Summary", style=ButtonStyle.blurple,emoji='📊')
     async def summary(self, button, interaction: Interaction):
-        pcs, services, total = get_summary()
+        pcs, services, total = use.get_summary()
         bot_user = interaction.client.user
 
         embed = Embed(title="⚡ Quick Summary", color=0x7289DA)
@@ -53,7 +54,7 @@ class PCv(View):
 
     @button(label="Save Logs", style=ButtonStyle.green,emoji='💾')
     async def reset(self, button, interaction: Interaction):
-        data = load_data()
+        data = use.load_data()
         pcs_total = data["totals"]["pcs"]
         services_total = data["totals"]["services"]
         total = data["totals"]["all"]
@@ -77,8 +78,7 @@ class PCv(View):
             if channel:
                 await channel.send(embed=embed)
 
-        # Archive + reset
-        reset_logs()
+        db.save_logs()
         await interaction.response.send_message("✅ Logs have been reset and archived.", ephemeral=True)
 
 class PC(commands.Cog):

@@ -1,25 +1,11 @@
-from calendar import c
 from nextcord import Button, ButtonStyle, SelectOption,Interaction,Embed,TextInputStyle
 import nextcord
 from datetime import datetime
 import os, json
-from .database import db
-from nextcord.ui import Select, button,View,Modal,TextInput
+import utils.database as db
+from nextcord.ui import Select,View,Modal,TextInput
 
 DATA_FILE = "current_day.json"
-DATA_FOLDER = "./data"
-SERVICES_FILE = "./data/services.json"
-
-def load_services():
-    try:
-        services = list(db.cyber.services.find({}, {"_id": 0}))  
-        if not services:
-            return []
-        return services
-        
-    except Exception as e:
-        print(f"[Services] Error loading file: {e}")
-        return []
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -33,8 +19,8 @@ def load_data():
         return json.load(f)
 
 def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    with open(DATA_FILE, 'w',encoding='utf-8') as f:
+        json.dump(data, f, indent=4)
 
 class LogEdit(Modal):
     def __init__(self,msg,log_index,log_type,cost,edit_type):
@@ -120,15 +106,16 @@ class ServiceEdit(Select):
         self.log_type = log_type
         self.cost = cost
         
-        services = load_services()
+        services = db.load_services()
         options = []
-        for name, info in services.items():
-            cost = info.get("cost", 0)
-            emoji = info.get("emoji", "🛠️")
-            available = info.get("available", True)
+        for service in services:
+            name = service['name']
+            cost = service['cost']
+            emoji = service['emoji']
+            available = service['available']
 
             if not available:
-                continue  # skip unavailable services
+                continue  
 
             options.append(
                 SelectOption(
@@ -298,19 +285,6 @@ def get_summary():
         data["totals"]["services"],
         data["totals"]["all"]
     )
-
-def reset_logs():
-    if not os.path.exists(DATA_FOLDER):
-        os.makedirs(DATA_FOLDER)
-    if os.path.exists(DATA_FILE):
-        filename = f"{DATA_FOLDER}/logs_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
-        os.rename(DATA_FILE, filename)
-    save_data({
-        "pcs": [],
-        "services": [],
-        "totals": {"pcs": 0, "services": 0, "all": 0},
-        "log_channel_id": None
-    })
 
 def cost_to_time(cost: int):
     min = cost * 6

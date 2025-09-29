@@ -1,20 +1,8 @@
 import json, os, nextcord
 from nextcord.ext import commands
-from nextcord import slash_command, Interaction
+from nextcord import Color, Embed, slash_command, Interaction
 from nextcord import SlashOption
-
-SERVICES_FILE = "./data/services.json"
-
-def load_services():
-    if not os.path.exists(SERVICES_FILE):
-        return {}
-    with open(SERVICES_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def save_services(data):
-    with open(SERVICES_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
+import utils.database as db
 
 class AddService(commands.Cog):
     def __init__(self, client):
@@ -46,24 +34,33 @@ class AddService(commands.Cog):
             required=True
         )
     ):
-        services = load_services()
+        services = db.load_services()
 
-        if service_name in services:
-            await interaction.response.send_message(
-                f"⚠️ Service **{service_name}** already exists.", ephemeral=True
-            )
-            return
+        for service in services:
+            if service_name == service['name']:
+                return await interaction.response.send_message(
+                    f"⚠️ Service **{service_name}** already exists.", ephemeral=True
+                )
+                
 
-        services[service_name] = {
+        service_doc = {
+            "name": service_name,
             "cost": int(cost),
             "emoji": emoji,
             "available": True if availability == "true" else False,
             "custom_cost": True if is_custom == 'true' else False
         }
-        save_services(services)
+        db.save_service(service_doc)
 
+        embed = Embed(
+            title = "✅ Service added",
+            color=Color.green()
+        )
+        embed.add_field(name="🔨 Service Name",value=service_name)
+        embed.add_field(name="💷 Cost",value =f"{cost} EGP")
+        embed.add_field(name="🔓 availability",value="available" if availability else "Closed")
         await interaction.response.send_message(
-            f"✅ Added service {emoji} **{service_name}** with cost **{cost} EGP**, availability: **{availability}**",
+            embed =embed,
             ephemeral=True
         )
 

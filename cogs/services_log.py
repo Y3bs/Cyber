@@ -4,7 +4,8 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import Embed, Interaction, slash_command, SelectOption,TextInputStyle,Color
 from nextcord.ui import View, Select,Modal,TextInput
-from utils.utils import log_service,load_services
+import utils.utils as use
+import utils.database as db
 
 class CustomServiceCost(Modal):
     def __init__(self, service,emoji):
@@ -18,7 +19,7 @@ class CustomServiceCost(Modal):
         if not cost.isdigit():
             return await interaction.response.send_message('❌ Cost must be an integer 🔢', ephemeral=True)
         guild = interaction.guild
-        await log_service(guild,cost,self.service,self.emoji,staff=interaction.user.display_name)
+        await use.log_service(guild,cost,self.service,self.emoji,staff=interaction.user.display_name)
 
        # Confirmation Message
         embed = Embed(
@@ -33,14 +34,13 @@ class CustomServiceCost(Modal):
 
 class ServiceDropdown(Select):
     def __init__(self):
-        services = load_services()
+        services = db.load_services()
         options = []
         for service in services:
-            name = service.keys()
-            print(name)
-            cost = service.get('cost')
-            emoji = service.get("emoji")
-            available = service.get("available")
+            name = service['name']
+            cost = service['cost']
+            emoji = service['emoji']
+            available = service['available']
 
             if not available:
                 continue  # skip unavailable services
@@ -60,7 +60,7 @@ class ServiceDropdown(Select):
         super().__init__(placeholder="Select a service...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: Interaction):
-        services = load_services()
+        services = db.load_services()
         service_name = self.values[0]
 
         if service_name == "none":
@@ -78,7 +78,7 @@ class ServiceDropdown(Select):
             return
 
         # ✅ Log the service in utils.py
-        await log_service(
+        await use.log_service(
             interaction.guild,
             cost,
             service_name,

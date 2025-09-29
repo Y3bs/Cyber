@@ -4,7 +4,6 @@ from nextcord import Intents
 from dotenv import load_dotenv
 import os
 from utils.database import db
-from pprint import pprint
 
 intents = Intents.default()
 intents.messages = True
@@ -29,11 +28,8 @@ async def on_ready():
     try:
         db.admin.command('ping')
         print("✅ Database Connection: Connected")
-        pprint(list(db.cyber.services.find({},{"_id": 0})))
     except Exception as e:
         print(f"❌ Database Connection: Failed - {str(e)}")
         print("=" * 50)
-
-
 
 client.run(TOKEN)
