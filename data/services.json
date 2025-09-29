@@ -1,0 +1,38 @@
+{
+    "تحديد الرغبات": {
+        "cost": 50,
+        "emoji": "📃",
+        "available": true,
+        "custom_cost": false
+    },
+    "تقديم الأراضي": {
+        "cost": 150,
+        "emoji": "🏘️",
+        "available": true,
+        "custom_cost": false
+    },
+    "خدمات بطاقة التموين": {
+        "cost": 50,
+        "emoji": "💳",
+        "available": true,
+        "custom_cost": false
+    },
+    "تقديم شقق سكنية": {
+        "cost": 100,
+        "emoji": "🏢",
+        "available": true,
+        "custom_cost": false
+    },
+    "خدمات المدارس": {
+        "cost": 0,
+        "emoji": "🏫",
+        "available": false,
+        "custom_cost": false
+    },
+    "طباعة": {
+        "cost": 0,
+        "emoji": "🖨",
+        "available": true,
+        "custom_cost": true
+    }
+}

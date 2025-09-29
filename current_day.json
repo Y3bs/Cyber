@@ -1,0 +1,29 @@
+{
+    "pcs": [
+        {
+            "pc": "PC 5",
+            "amount": 45,
+            "staff": "(⌐■_■)™",
+            "time": "26 Sep 2025 01:01 AM"
+        },
+        {
+            "pc": "PC 2",
+            "amount": 20,
+            "staff": "(⌐■_■)™",
+            "time": "26 Sep 2025 01:04 AM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 243,
+            "staff": "(⌐■_■)™",
+            "time": "26 Sep 2025 01:20 AM"
+        }
+    ],
+    "services": [],
+    "totals": {
+        "pcs": 308,
+        "services": 0,
+        "all": 308
+    },
+    "log_channel_id": 1420892081223766170
+}

@@ -1,0 +1,222 @@
+{
+    "pcs": [
+        {
+            "pc": "PC 4",
+            "amount": 10,
+            "staff": "Yousef",
+            "time": "18 Sep 2025 09:36 AM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 10,
+            "staff": "Yousef",
+            "time": "18 Sep 2025 09:38 AM"
+        },
+        {
+            "pc": "PC 4",
+            "amount": 20,
+            "staff": "Yousef",
+            "time": "18 Sep 2025 02:22 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 25,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 02:24 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 105,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 02:24 PM"
+        },
+        {
+            "pc": "PC 2",
+            "amount": 5,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 02:24 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 51,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 08:51 AM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 20,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:35 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:37 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 20,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:39 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 50,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:42 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:43 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 20,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:47 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:50 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:52 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:53 PM"
+        },
+        {
+            "pc": "PC 4",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:54 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 12:57 PM"
+        },
+        {
+            "pc": "PC 4",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:00 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 20,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:01 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 250,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:03 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:11 PM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:12 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:17 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:18 PM"
+        },
+        {
+            "pc": "PC 4",
+            "amount": 320,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:21 PM"
+        },
+        {
+            "pc": "PC 5",
+            "amount": "30",
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:22 PM"
+        }
+    ],
+    "services": [
+        {
+            "service": "تقديم شقق سكنية",
+            "amount": 100,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 09:42 AM"
+        },
+        {
+            "service": "تقديم شقق سكنية",
+            "amount": 100,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 09:47 AM"
+        },
+        {
+            "service": "تحديد الرغبات",
+            "amount": 50,
+            "staff": "(⌐■_■)™",
+            "time": "18 Sep 2025 09:47 AM"
+        },
+        {
+            "service": "طباعة",
+            "amount": 0,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 09:45 AM"
+        },
+        {
+            "service": "طباعة",
+            "amount": 0,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 09:46 AM"
+        },
+        {
+            "service": "تقديم شقق سكنية",
+            "amount": 100,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 09:47 AM"
+        },
+        {
+            "service": "طباعة",
+            "amount": 0,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 09:47 AM"
+        },
+        {
+            "service": "طباعة",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "21 Sep 2025 09:50 AM"
+        }
+    ],
+    "totals": {
+        "pcs": 1306,
+        "services": 380,
+        "all": 1686
+    },
+    "log_channel_id": 1420342759243386890
+}

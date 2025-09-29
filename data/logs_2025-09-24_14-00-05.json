@@ -1,0 +1,36 @@
+{
+    "pcs": [
+        {
+            "pc": "PC 3",
+            "amount": 30,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:39 PM"
+        }
+    ],
+    "services": [
+        {
+            "service": "تقديم الأراضي",
+            "amount": 150,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:53 PM"
+        },
+        {
+            "service": "تقديم الأراضي",
+            "amount": 150,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:54 PM"
+        },
+        {
+            "service": "طباعة",
+            "amount": 15,
+            "staff": "(⌐■_■)™",
+            "time": "24 Sep 2025 01:56 PM"
+        }
+    ],
+    "totals": {
+        "pcs": 30,
+        "services": 315,
+        "all": 345
+    },
+    "log_channel_id": 1420342759243386890
+}
