@@ -11,7 +11,7 @@ db = MongoClient(DB_TOKEN)
 
 def load_services():
     try:
-        services = list(db.cyber.services.find({}, {"_id": 0}))  
+        services = list(db.cyber.services.find({}, {"_id": 0})).sort({"name": 1})  
         if not services:
             return []
         return services
