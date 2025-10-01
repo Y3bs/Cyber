@@ -116,8 +116,10 @@ class ServiceCog(commands.Cog):
             title="🛠️ Service Logging Panel",
             description="Select a service from the dropdown below to log it.",
             color=0xFFA500
-        )
+        )        
+        embed.set_thumbnail(url=bot.display_avatar.url)
         embed.set_footer(text=f"{bot.name} | Daily logs")
+        
         await interaction.channel.send(embed=embed, view=ServicePanel())
         await interaction.response.send_message("✅ Service panel created", ephemeral=True)
 

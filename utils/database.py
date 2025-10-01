@@ -58,7 +58,8 @@ def save_logs():
         default = {
             "pcs": [],
             "services": [],
-            "totals": {"pcs": 0, "services": 0, "all": 0},
+            "expenses":[],
+            "totals": {"pcs": 0, "services": 0,"expenses":0, "all": 0},
             "log_channel_id": None
         }
         with open('current_day.json','w',encoding='utf-8') as f:

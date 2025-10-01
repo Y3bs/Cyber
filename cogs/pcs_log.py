@@ -98,6 +98,7 @@ class PC(commands.Cog):
         embed.add_field(name='PC Selection', value='Choose from the dropdown list below.')
         embed.set_footer(text=f'{bot.name} | Daily logs')
         embed.set_thumbnail(url=bot.display_avatar.url)
+        
         await interaction.channel.send(embed=embed, view=PCv())
         await interaction.response.send_message('Panel Created', ephemeral=True)
 

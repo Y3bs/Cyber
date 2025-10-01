@@ -2,22 +2,33 @@
     "pcs": [
         {
             "pc": "PC 3",
-            "amount": 70,
+            "amount": 45,
             "staff": "(\u2310\u25a0_\u25a0)\u2122",
-            "time": "29 Sep 2025 10:43 PM"
+            "time": "01 Oct 2025 03:20 PM"
         },
         {
-            "pc": "PC 5",
-            "amount": 15,
+            "pc": "PC 4",
+            "amount": 567,
             "staff": "(\u2310\u25a0_\u25a0)\u2122",
-            "time": "29 Sep 2025 10:44 PM"
+            "time": "01 Oct 2025 03:24 PM"
         }
     ],
     "services": [],
+    "expenses": [
+        {
+            "name": "\u0645\u0639\u0637\u0631",
+            "amount": 55
+        },
+        {
+            "name": "\u0645\u0639\u0637\u0631",
+            "amount": 55
+        }
+    ],
     "totals": {
-        "pcs": 85,
+        "pcs": 612,
         "services": 0,
-        "all": 85
+        "expenses": 110,
+        "all": 502
     },
-    "log_channel_id": 1422305443656630352
+    "log_channel_id": 1422921183539626086
 }

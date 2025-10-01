@@ -12,7 +12,8 @@ def load_data():
         return {
             "pcs": [],
             "services": [],
-            "totals": {"pcs": 0, "services": 0, "all": 0},
+            "expenses":[],
+            "totals": {"pcs": 0, "services": 0,"expenses":0, "all": 0},
             "log_channel_id": None,
         }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -135,6 +136,24 @@ class ServiceEdit(Select):
         service = self.values[0]
         await interaction.response.send_modal(LogEdit(self.msg,self.log_index,self.log_type,self.cost,service))    
 
+class ExpenseEdit(Modal):
+    def __init__(self,msg,log_index,log_type):
+        super().__init__(title="Detail Edit")
+        self.add_item(TextInput(label="🛍 Expense Name",style=TextInputStyle.short,required=True))
+        self.add_item(TextInput(label="💷 Cost",style=TextInputStyle.short,required=True))
+        self.msg = msg
+        self.log_index = log_index
+        self.log_type = log_type
+    
+    
+    async def callback(self,interaction: Interaction):
+        expense = self.children[0].value
+        cost = self.children[1].value
+        
+
+
+
+
 class Edit(View):
     def __init__(self,log_index,log_type):
         super().__init__(timeout=None)
@@ -169,6 +188,7 @@ class Edit(View):
                     value = ' '
                 )
             await interaction.response.send_message(embed=embed,view = pc_dropdown,ephemeral=True)
+
         if self.log_type == 'services':
             service_dropdown = View()
             service_dropdown.add_item(ServiceEdit(msg,self.log_index,self.log_type,cost))
@@ -178,6 +198,10 @@ class Edit(View):
                 color=0xFFA500
             )
             await interaction.response.send_message(embed=embed,view=service_dropdown,ephemeral=True)
+
+        if self.log_type == 'expenses':
+            await interaction.response.send_modal(ExpenseEdit())
+
 
     @nextcord.ui.button(
         label = "Delete",
@@ -210,8 +234,6 @@ class Edit(View):
             except Exception as e:
                 await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
 
-
-
 async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, staff: str = "Yousef",notes: str = None):
     amount_paid = int(amount_paid)
     today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
@@ -222,7 +244,7 @@ async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, sta
     data = load_data()
     data["pcs"].append({"pc": pc_name, "amount": amount_paid, "staff": staff, "time": today_full})
     data["totals"]["pcs"] += amount_paid
-    data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"]
+    data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"] - data['totals']['expenses']
 
     # Find or create the log channel
     channel = nextcord.utils.get(guild.text_channels, name=today_channel)
@@ -257,7 +279,7 @@ async def log_service(guild: nextcord.Guild, amount_paid: int, service_name: str
     data = load_data()
     data["services"].append({"service": service_name, "amount": amount_paid, "staff": staff, "time": today_full})
     data["totals"]["services"] += amount_paid
-    data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"]
+    data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"] - data['totals']['expenses']
 
     # Find or create the log channel
     channel = nextcord.utils.get(guild.text_channels, name=today_channel)
@@ -280,6 +302,36 @@ async def log_service(guild: nextcord.Guild, amount_paid: int, service_name: str
 
     await channel.send(embed=embed,view=Edit(len(data['services'])-1,'services'))
 
+async def log_expense(guild: nextcord.Guild, amount: int, expense_name: str,staff: str = "Yousef"):
+    amount = int(amount)
+    today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
+    today_channel = datetime.now().strftime("logs-%Y-%m-%d")
+    
+    data = load_data()
+    data['expenses'].append({"name":expense_name,"amount":amount})
+    data['totals']['expenses'] += amount
+    data['totals']['all'] = data['totals']['pcs'] + data['totals']['services'] - data['totals']['expenses']
+
+    # Find or create the log channel
+    channel = nextcord.utils.get(guild.text_channels, name=today_channel)
+    if channel is None:
+        channel = await guild.create_text_channel(today_channel)
+    data["log_channel_id"] = channel.id
+
+    save_data(data)
+
+    # Embed
+    embed = nextcord.Embed(
+        title="🛒 Expense Logged",
+        description="A new expense has been recorded successfully.",
+        color=nextcord.Color.orange()
+    )
+    embed.add_field(name="📦 Service", value=f'{expense_name}', inline=True)
+    embed.add_field(name="💰 Amount Paid", value=f"💷 {amount} EGP", inline=True)
+    embed.add_field(name="📅 Date", value=today_full, inline=True)
+    embed.set_footer(text=f"Logged by: {staff} | Leader")
+
+    await channel.send(embed=embed,view=Edit(len(data['expenses'])-1,'expenses'))
 def get_summary():
     data = load_data()
     return (
