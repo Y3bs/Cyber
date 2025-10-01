@@ -22,13 +22,43 @@
         {
             "name": "\u0645\u0639\u0637\u0631",
             "amount": 55
+        },
+        {
+            "name": "\u0645\u0639\u0637\u0631",
+            "amount": 77
+        },
+        {
+            "name": "electricity",
+            "amount": 200
+        },
+        {
+            "name": "test",
+            "amount": 10,
+            "expenses": "not test"
+        },
+        {
+            "name": "test",
+            "amount": 15,
+            "expenses": "after edit"
+        },
+        {
+            "name": "after edit",
+            "amount": 15
+        },
+        {
+            "name": "again",
+            "amount": 15
+        },
+        {
+            "name": "not gg",
+            "amount": 40
         }
     ],
     "totals": {
         "pcs": 612,
         "services": 0,
-        "expenses": 110,
-        "all": 502
+        "expenses": 492,
+        "all": 120
     },
-    "log_channel_id": 1422921183539626086
+    "log_channel_id": 1423056591279882260
 }

@@ -53,7 +53,7 @@ class LogEdit(Modal):
                 data['pcs'][self.log_index] = new_data
                 save_data(data)
 
-                data['totals']['pcs'], data['totals']['services'], data['totals']['all'] = calc_totals(data)
+                data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
 
                 await interaction.followup.send('Pc Session Edited ✅',ephemeral=True)
@@ -76,7 +76,7 @@ class LogEdit(Modal):
                 data['services'][self.log_index] = new_data
                 save_data(data)
 
-                data['totals']['pcs'], data['totals']['services'], data['totals']['all'] = calc_totals(data)
+                data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
 
                 await interaction.followup.send('Service Edited ✅',ephemeral=True)
@@ -145,15 +145,31 @@ class ExpenseEdit(Modal):
         self.log_index = log_index
         self.log_type = log_type
     
-    
     async def callback(self,interaction: Interaction):
-        expense = self.children[0].value
-        cost = self.children[1].value
+        await interaction.response.send_message("Editing ur message... 🔃",ephemeral=True)
+        try:
+            expense = self.children[0].value
+            cost = self.children[1].value
+
+            embed = self.msg.embeds[0]
+            embed.set_field_at(0, name="🛍️ Expense", value=expense, inline=True)         
+            embed.set_field_at(1, name="💰 Amount Paid", value=f"💷 {cost} EGP", inline=True)
+
+            await self.msg.edit(embed=embed)
+
+            data = load_data()
+            new_data = data['expenses'][self.log_index]
+            new_data['name'] = expense
+            new_data['amount'] = int(cost)
+            data['expenses'][self.log_index] = new_data
+            save_data(data)
+
+            data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            await interaction.followup.send('Expense Edited ✅',ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"Editing ur message has failed\nError: ```{e}```")
         
-
-
-
-
 class Edit(View):
     def __init__(self,log_index,log_type):
         super().__init__(timeout=None)
@@ -200,7 +216,7 @@ class Edit(View):
             await interaction.response.send_message(embed=embed,view=service_dropdown,ephemeral=True)
 
         if self.log_type == 'expenses':
-            await interaction.response.send_modal(ExpenseEdit())
+            await interaction.response.send_modal(ExpenseEdit(msg,self.log_index,self.log_type))
 
 
     @nextcord.ui.button(
@@ -217,7 +233,7 @@ class Edit(View):
                 del data['pcs'][self.log_index]
                 await interaction.message.delete()
                 save_data(data)
-                data['totals']['pcs'], data['totals']['services'], data['totals']['all'] = calc_totals(data)
+                data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
                 await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
             except Exception as e:
@@ -228,8 +244,18 @@ class Edit(View):
                 del data['services'][self.log_index]
                 await interaction.message.delete()
                 save_data(data)
-                data['totals']['pcs'], data['totals']['services'], data['totals']['all'] = calc_totals(data)
+                data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
+                await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
+            except Exception as e:
+                await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
+        
+        if self.log_type == 'expenses':
+            try:
+                del data['expenses'][self.log_index]
+                await interaction.message.delete()
+                save_data(data)
+                data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
@@ -324,14 +350,15 @@ async def log_expense(guild: nextcord.Guild, amount: int, expense_name: str,staf
     embed = nextcord.Embed(
         title="🛒 Expense Logged",
         description="A new expense has been recorded successfully.",
-        color=nextcord.Color.orange()
+        color=nextcord.Color.red()
     )
-    embed.add_field(name="📦 Service", value=f'{expense_name}', inline=True)
+    embed.add_field(name="🛍️ Expense", value=f'{expense_name}', inline=True)
     embed.add_field(name="💰 Amount Paid", value=f"💷 {amount} EGP", inline=True)
     embed.add_field(name="📅 Date", value=today_full, inline=True)
     embed.set_footer(text=f"Logged by: {staff} | Leader")
 
     await channel.send(embed=embed,view=Edit(len(data['expenses'])-1,'expenses'))
+    
 def get_summary():
     data = load_data()
     return (
@@ -350,8 +377,11 @@ def cost_to_time(cost: int):
 def calc_totals(data):
     total_pc = 0
     total_service = 0
+    total_expense = 0
     for record in data['pcs']:
         total_pc += record['amount']
     for record in data['services']:
         total_service += record['amount']
-    return total_pc,total_service,(total_pc + total_service)
+    for record in data['expenses']:
+        total_expense += record['amount']
+    return total_pc,total_service,total_expense,(total_pc + total_service - total_expense)
