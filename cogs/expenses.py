@@ -1,7 +1,7 @@
 from tkinter import Button
 from nextcord.ext import commands
 from nextcord import ButtonStyle, Color, Interaction,Embed, TextInputStyle,slash_command
-from nextcord.ui import Modal, TextInput, button,View
+from nextcord.ui import Modal, TextInput,Button, button,View
 import utils.utils as use
 
 class ExpenseModal(Modal):
