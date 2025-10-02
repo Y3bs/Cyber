@@ -4,6 +4,7 @@ from datetime import datetime
 import os, json
 import utils.database as db
 from nextcord.ui import Select,View,Modal,TextInput
+import uuid
 
 DATA_FILE = "current_day.json"
 
@@ -24,9 +25,9 @@ def save_data(data):
         json.dump(data, f, indent=4)
 
 class LogEdit(Modal):
-    def __init__(self,msg,log_index,log_type,cost,edit_type):
+    def __init__(self,msg,log_id,log_type,cost,edit_type):
         super().__init__(title='Edited Bill')
-        self.log_index = log_index
+        self.log_id = log_id
         self.log_type = log_type
         self.msg = msg
         self.cost = cost
@@ -46,11 +47,20 @@ class LogEdit(Modal):
 
                 await self.msg.edit(embed=embed)
 
+                # Update MongoDB
+                update_data = {
+                    "pc": self.edit_type,
+                    "amount": int(cost)
+                }
+                db.update_pc_session(self.log_id, update_data)
+
+                # Update JSON
                 data = load_data()
-                new_data = data['pcs'][self.log_index]
-                new_data['pc'] = self.edit_type
-                new_data['amount'] = int(cost)
-                data['pcs'][self.log_index] = new_data
+                for i, pc in enumerate(data['pcs']):
+                    if pc.get('session_id') == self.log_id:
+                        data['pcs'][i]['pc'] = self.edit_type
+                        data['pcs'][i]['amount'] = int(cost)
+                        break
                 save_data(data)
 
                 data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
@@ -69,11 +79,20 @@ class LogEdit(Modal):
 
                 await self.msg.edit(embed=embed)
 
+                # Update MongoDB
+                update_data = {
+                    "service": self.edit_type,
+                    "amount": int(cost)
+                }
+                db.update_service_log(self.log_id, update_data)
+
+                # Update JSON
                 data = load_data()
-                new_data = data['services'][self.log_index]
-                new_data['service'] = self.edit_type
-                new_data['amount'] = int(cost)
-                data['services'][self.log_index] = new_data
+                for i, service in enumerate(data['services']):
+                    if service.get('log_id') == self.log_id:
+                        data['services'][i]['service'] = self.edit_type
+                        data['services'][i]['amount'] = int(cost)
+                        break
                 save_data(data)
 
                 data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
@@ -85,8 +104,8 @@ class LogEdit(Modal):
 
 
 class PcEdit(Select):
-    def __init__(self,msg,log_index,log_type,cost):
-        self.log_index = log_index
+    def __init__(self,msg,log_id,log_type,cost):
+        self.log_id = log_id
         self.log_type = log_type
         self.msg = msg
         self.cost = cost
@@ -98,12 +117,12 @@ class PcEdit(Select):
     
     async def callback(self, interaction: Interaction):
         pc = self.values[0]
-        await interaction.response.send_modal(LogEdit(self.msg,self.log_index,self.log_type,self.cost,pc))
+        await interaction.response.send_modal(LogEdit(self.msg,self.log_id,self.log_type,self.cost,pc))
 
 class ServiceEdit(Select):
-    def __init__(self,msg,log_index,log_type,cost):
+    def __init__(self,msg,log_id,log_type,cost):
         self.msg = msg
-        self.log_index = log_index
+        self.log_id = log_id
         self.log_type = log_type
         self.cost = cost
         
@@ -134,15 +153,15 @@ class ServiceEdit(Select):
 
     async def callback(self, interaction: Interaction):
         service = self.values[0]
-        await interaction.response.send_modal(LogEdit(self.msg,self.log_index,self.log_type,self.cost,service))    
+        await interaction.response.send_modal(LogEdit(self.msg,self.log_id,self.log_type,self.cost,service))    
 
 class ExpenseEdit(Modal):
-    def __init__(self,msg,log_index,log_type):
+    def __init__(self,msg,log_id,log_type):
         super().__init__(title="Detail Edit")
         self.add_item(TextInput(label="🛍 Expense Name",style=TextInputStyle.short,required=True))
         self.add_item(TextInput(label="💷 Cost",style=TextInputStyle.short,required=True))
         self.msg = msg
-        self.log_index = log_index
+        self.log_id = log_id
         self.log_type = log_type
     
     async def callback(self,interaction: Interaction):
@@ -157,11 +176,20 @@ class ExpenseEdit(Modal):
 
             await self.msg.edit(embed=embed)
 
+            # Update MongoDB
+            update_data = {
+                "name": expense,
+                "amount": int(cost)
+            }
+            db.update_expense_log(self.log_id, update_data)
+
+            # Update JSON
             data = load_data()
-            new_data = data['expenses'][self.log_index]
-            new_data['name'] = expense
-            new_data['amount'] = int(cost)
-            data['expenses'][self.log_index] = new_data
+            for i, exp in enumerate(data['expenses']):
+                if exp.get('log_id') == self.log_id:
+                    data['expenses'][i]['name'] = expense
+                    data['expenses'][i]['amount'] = int(cost)
+                    break
             save_data(data)
 
             data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
@@ -171,9 +199,9 @@ class ExpenseEdit(Modal):
             await interaction.followup.send(f"Editing ur message has failed\nError: ```{e}```")
         
 class Edit(View):
-    def __init__(self,log_index,log_type):
+    def __init__(self,log_id,log_type):
         super().__init__(timeout=None)
-        self.log_index = log_index
+        self.log_id = log_id
         self.log_type = log_type
     
     @nextcord.ui.button(
@@ -192,7 +220,7 @@ class Edit(View):
 
         if self.log_type == 'pcs':
             pc_dropdown = View()
-            pc_dropdown.add_item(PcEdit(msg,self.log_index,self.log_type,cost))
+            pc_dropdown.add_item(PcEdit(msg,self.log_id,self.log_type,cost))
             embed = Embed(
                 title='Pc Session Edit',
                 description='Choose which pc you want to edit the current session',
@@ -207,7 +235,7 @@ class Edit(View):
 
         if self.log_type == 'services':
             service_dropdown = View()
-            service_dropdown.add_item(ServiceEdit(msg,self.log_index,self.log_type,cost))
+            service_dropdown.add_item(ServiceEdit(msg,self.log_id,self.log_type,cost))
             embed = Embed(
                 title='Service Edit',
                 description='Choose a service to edit for',
@@ -216,7 +244,7 @@ class Edit(View):
             await interaction.response.send_message(embed=embed,view=service_dropdown,ephemeral=True)
 
         if self.log_type == 'expenses':
-            await interaction.response.send_modal(ExpenseEdit(msg,self.log_index,self.log_type))
+            await interaction.response.send_modal(ExpenseEdit(msg,self.log_id,self.log_type))
 
 
     @nextcord.ui.button(
@@ -230,32 +258,45 @@ class Edit(View):
         
         if self.log_type == 'pcs':
             try:
-                del data['pcs'][self.log_index]
-                await interaction.message.delete()
-                save_data(data)
+                # Delete from MongoDB
+                db.delete_pc_session(self.log_id)
+                
+                # Remove from JSON and update totals
+                data['pcs'] = [pc for pc in data['pcs'] if pc.get('session_id') != self.log_id]
                 data['totals']['pcs'], data['totals']['services'],data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
+                
+                await interaction.message.delete()
                 await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
 
         if self.log_type == 'services':
             try:
-                del data['services'][self.log_index]
-                await interaction.message.delete()
-                save_data(data)
+                # Delete from MongoDB
+                db.delete_service_log(self.log_id)
+                
+                # Remove from JSON and update totals
+                data['services'] = [s for s in data['services'] if s.get('log_id') != self.log_id]
                 data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
                 save_data(data)
+                
+                await interaction.message.delete()
                 await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
         
         if self.log_type == 'expenses':
             try:
-                del data['expenses'][self.log_index]
-                await interaction.message.delete()
-                save_data(data)
+                # Delete from MongoDB
+                db.delete_expense_log(self.log_id)
+                
+                # Remove from JSON and update totals
+                data['expenses'] = [e for e in data['expenses'] if e.get('log_id') != self.log_id]
                 data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+                save_data(data)
+                
+                await interaction.message.delete()
                 await interaction.followup.send("Message deleted 🗑️",ephemeral=True)
             except Exception as e:
                 await interaction.followup.send(f"Failed to delete the message\nError: ```{e}```",ephemeral=True)
@@ -265,12 +306,35 @@ async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, sta
     today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
     today_channel = datetime.now().strftime("logs-%Y-%m-%d")
     session_time  = cost_to_time(amount_paid)
+    session_id = str(uuid.uuid4())
 
-    # Save to JSON
+    # Save to JSON (for current day)
     data = load_data()
-    data["pcs"].append({"pc": pc_name, "amount": amount_paid, "staff": staff, "time": today_full})
+    session_data = {
+        "pc": pc_name, 
+        "amount": amount_paid, 
+        "staff": staff, 
+        "time": today_full,
+        "notes": notes,
+        "session_id": session_id
+    }
+    data["pcs"].append(session_data)
     data["totals"]["pcs"] += amount_paid
     data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"] - data['totals']['expenses']
+
+    # Save to MongoDB
+    mongo_data = {
+        "session_id": session_id,
+        "pc": pc_name,
+        "amount": amount_paid,
+        "staff": staff,
+        "time": today_full,
+        "notes": notes,
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "timestamp": datetime.now(),
+        "guild_id": guild.id
+    }
+    db.save_pc_session(mongo_data)
 
     # Find or create the log channel
     channel = nextcord.utils.get(guild.text_channels, name=today_channel)
@@ -294,18 +358,40 @@ async def log_session(guild: nextcord.Guild, amount_paid: int, pc_name: str, sta
         embed.add_field(name="📝 Notes",value=notes,inline=True)
     embed.set_footer(text=f"Logged by: {staff} | Leader")
 
-    await channel.send(embed=embed,view=Edit(len(data['pcs'])-1 ,'pcs'))
+    await channel.send(embed=embed,view=Edit(session_id, 'pcs'))
 
 async def log_service(guild: nextcord.Guild, amount_paid: int, service_name: str,emoji: str, staff: str = "Yousef"):
     amount_paid = int(amount_paid)
     today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
     today_channel = datetime.now().strftime("logs-%Y-%m-%d")
+    log_id = str(uuid.uuid4())
 
-    # Save to JSON
+    # Save to JSON (for current day)
     data = load_data()
-    data["services"].append({"service": service_name, "amount": amount_paid, "staff": staff, "time": today_full})
+    service_data = {
+        "service": service_name, 
+        "amount": amount_paid, 
+        "staff": staff, 
+        "time": today_full,
+        "log_id": log_id
+    }
+    data["services"].append(service_data)
     data["totals"]["services"] += amount_paid
     data["totals"]["all"] = data["totals"]["pcs"] + data["totals"]["services"] - data['totals']['expenses']
+
+    # Save to MongoDB
+    mongo_data = {
+        "log_id": log_id,
+        "service": service_name,
+        "amount": amount_paid,
+        "staff": staff,
+        "time": today_full,
+        "emoji": emoji,
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "timestamp": datetime.now(),
+        "guild_id": guild.id
+    }
+    db.save_service_log(mongo_data)
 
     # Find or create the log channel
     channel = nextcord.utils.get(guild.text_channels, name=today_channel)
@@ -326,17 +412,39 @@ async def log_service(guild: nextcord.Guild, amount_paid: int, service_name: str
     embed.add_field(name="📅 Date", value=today_full, inline=True)
     embed.set_footer(text=f"Logged by: {staff} | Leader")
 
-    await channel.send(embed=embed,view=Edit(len(data['services'])-1,'services'))
+    await channel.send(embed=embed,view=Edit(log_id,'services'))
 
 async def log_expense(guild: nextcord.Guild, amount: int, expense_name: str,staff: str = "Yousef"):
     amount = int(amount)
     today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
     today_channel = datetime.now().strftime("logs-%Y-%m-%d")
+    log_id = str(uuid.uuid4())
     
+    # Save to JSON (for current day)
     data = load_data()
-    data['expenses'].append({"name":expense_name,"amount":amount})
+    expense_data = {
+        "name": expense_name,
+        "amount": amount,
+        "staff": staff,
+        "time": today_full,
+        "log_id": log_id
+    }
+    data['expenses'].append(expense_data)
     data['totals']['expenses'] += amount
     data['totals']['all'] = data['totals']['pcs'] + data['totals']['services'] - data['totals']['expenses']
+
+    # Save to MongoDB
+    mongo_data = {
+        "log_id": log_id,
+        "name": expense_name,
+        "amount": amount,
+        "staff": staff,
+        "time": today_full,
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "timestamp": datetime.now(),
+        "guild_id": guild.id
+    }
+    db.save_expense_log(mongo_data)
 
     # Find or create the log channel
     channel = nextcord.utils.get(guild.text_channels, name=today_channel)
@@ -357,7 +465,7 @@ async def log_expense(guild: nextcord.Guild, amount: int, expense_name: str,staf
     embed.add_field(name="📅 Date", value=today_full, inline=True)
     embed.set_footer(text=f"Logged by: {staff} | Leader")
 
-    await channel.send(embed=embed,view=Edit(len(data['expenses'])-1,'expenses'))
+    await channel.send(embed=embed,view=Edit(log_id,'expenses'))
     
 def get_summary():
     data = load_data()

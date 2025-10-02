@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Service Log - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-edit"></i> Edit Service Log
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/update-service-log/{{ log.get('log_id') }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="service" class="form-label">Service Name</label>
+                                <input type="text" class="form-control" id="service" name="service" 
+                                       value="{{ log.get('service', '') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Amount (EGP)</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       value="{{ log.get('amount', 0) }}" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="staff" class="form-label">Staff Member</label>
+                        <input type="text" class="form-control" id="staff" name="staff" 
+                               value="{{ log.get('staff', '') }}" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/edit-records" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Update Service Log
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

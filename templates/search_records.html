@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Search Records - Cyber Cafe Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-container {
+        background: var(--gradient-secondary);
+        border: var(--border-primary);
+        color: var(--text-primary);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-secondary);
+    }
+    
+    .result-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--cyber-primary);
+        background: var(--background-secondary);
+        border: var(--border-secondary);
+        border-radius: 15px;
+        box-shadow: var(--shadow-secondary);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--cyber-primary);
+    }
+    
+    .result-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .result-card:hover::before {
+        opacity: 1;
+    }
+    
+    .pc-result { 
+        border-left-color: var(--pc-color);
+        border-left-width: 4px;
+    }
+    
+    .service-result { 
+        border-left-color: var(--service-color);
+        border-left-width: 4px;
+    }
+    
+    .expense-result { 
+        border-left-color: var(--expense-color);
+        border-left-width: 4px;
+    }
+    
+    .btn-action {
+        margin: 2px;
+        min-width: 80px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-primary);
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    
+    .no-results i {
+        color: var(--text-secondary);
+        opacity: 0.5;
+    }
+    
+    .section-header {
+        background: var(--background-tertiary);
+        border-bottom: var(--border-secondary);
+        border-radius: 15px 15px 0 0;
+        font-weight: 600;
+        color: var(--text-primary);
+        position: relative;
+    }
+    
+    .section-header::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        opacity: 0.7;
+    }
+    
+    .record-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .record-info strong {
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Search Container -->
+<div class="search-container">
+    <h2 class="text-primary"><i class="fas fa-search"></i> Search Records</h2>
+    <p class="mb-4">Search across all PC sessions, service logs, and expense logs</p>
+    
+    <form method="GET" action="/search-records">
+        <div class="row">
+            <div class="col-md-8">
+                <input type="text" class="form-control form-control-lg" name="q" 
+                       placeholder="Search by PC number, service name, expense name, staff, or amount..." 
+                       value="{{ query }}" autofocus>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Search Results -->
+{% if query %}
+    {% set total_results = results.pcs|length + results.services|length + results.expenses|length %}
+    
+    {% if total_results > 0 %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="text-primary">Search Results for "{{ query }}"</h4>
+                <p class="text-muted">Found {{ total_results }} matching records</p>
+            </div>
+        </div>
+
+        <!-- PC Sessions Results -->
+        {% if results.pcs %}
+        <div class="card mb-4">
+            <div class="card-header section-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-desktop text-primary"></i> PC Sessions ({{ results.pcs|length }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for record in results.pcs %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card result-card pc-result">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-desktop text-primary"></i> PC {{ record.get('pc', 'Unknown') }}
+                                </h6>
+                                <div class="record-info">
+                                    <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                    <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                    <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                                    {% if record.get('notes') %}
+                                    <strong>Notes:</strong> {{ record.get('notes') }}<br>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group w-100 mt-3">
+                                    <a href="/edit-pc-session/{{ record.get('session_id') }}" class="btn btn-sm btn-outline-primary btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-pc-session/{{ record.get('session_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this PC session?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Service Logs Results -->
+        {% if results.services %}
+        <div class="card mb-4">
+            <div class="card-header section-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-cogs text-success"></i> Service Logs ({{ results.services|length }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for record in results.services %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card result-card service-result">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-cogs text-success"></i> {{ record.get('service', 'Unknown') }}
+                                </h6>
+                                <div class="record-info">
+                                    <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                    <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                    <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                                    {% if record.get('emoji') %}
+                                    <strong>Emoji:</strong> {{ record.get('emoji') }}<br>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group w-100 mt-3">
+                                    <a href="/edit-service-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-success btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-service-log/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this service log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Expense Logs Results -->
+        {% if results.expenses %}
+        <div class="card mb-4">
+            <div class="card-header section-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-receipt text-warning"></i> Expense Logs ({{ results.expenses|length }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for record in results.expenses %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card result-card expense-result">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-receipt text-warning"></i> {{ record.get('name', 'Unknown') }}
+                                </h6>
+                                <div class="record-info">
+                                    <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                    <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                    <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                                </div>
+                                <div class="btn-group w-100 mt-3">
+                                    <a href="/edit-expense-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-warning btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-expense-log/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this expense log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="no-results">
+            <i class="fas fa-search fa-4x mb-3"></i>
+            <h4>No Results Found</h4>
+            <p>No records found matching "{{ query }}"</p>
+            <p class="text-muted">Try searching with different keywords or check your spelling.</p>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="no-results">
+        <i class="fas fa-search fa-4x mb-3"></i>
+        <h4>Search Records</h4>
+        <p>Enter a search term above to find specific records</p>
+        <p class="text-muted">You can search by PC number, service name, expense name, staff member, or amount.</p>
+    </div>
+{% endif %}
+{% endblock %}

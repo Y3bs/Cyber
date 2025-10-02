@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Records - Cyber Cafe Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .record-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--cyber-primary);
+        background: var(--background-secondary);
+        border: var(--border-secondary);
+        border-radius: 15px;
+        box-shadow: var(--shadow-secondary);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .record-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--cyber-primary);
+    }
+    
+    .record-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .record-card:hover::before {
+        opacity: 1;
+    }
+    
+    .pc-card { 
+        border-left-color: var(--pc-color);
+        border-left-width: 4px;
+    }
+    
+    .service-card { 
+        border-left-color: var(--service-color);
+        border-left-width: 4px;
+    }
+    
+    .expense-card { 
+        border-left-color: var(--expense-color);
+        border-left-width: 4px;
+    }
+    
+    .summary-card {
+        background: var(--gradient-secondary);
+        border: var(--border-primary);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-secondary);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--cyber-primary);
+    }
+    
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .summary-card:hover::before {
+        opacity: 1;
+    }
+    
+    .search-box {
+        background: var(--background-tertiary);
+        border: var(--border-secondary);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-secondary);
+    }
+    
+    .btn-action {
+        margin: 2px;
+        min-width: 80px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-primary);
+    }
+    
+    .record-count {
+        font-size: 0.9em;
+        color: var(--text-muted);
+    }
+    
+    .section-header {
+        background: var(--background-tertiary);
+        border-bottom: var(--border-secondary);
+        border-radius: 15px 15px 0 0;
+        font-weight: 600;
+        color: var(--text-primary);
+        position: relative;
+    }
+    
+    .section-header::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--gradient-primary);
+        opacity: 0.7;
+    }
+    
+    .no-records {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    
+    .no-records i {
+        color: var(--text-secondary);
+        opacity: 0.5;
+    }
+    
+    .record-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .record-info strong {
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            PC Sessions Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ pc_records|length }} Sessions
+                        </div>
+                        <div class="text-xs text-muted">
+                            💷 {{ "{:,}".format(pc_total) }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-desktop fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Services Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ service_records|length }} Services
+                        </div>
+                        <div class="text-xs text-muted">
+                            💷 {{ "{:,}".format(service_total) }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Expenses Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ expense_records|length }} Expenses
+                        </div>
+                        <div class="text-xs text-muted">
+                            💷 {{ "{:,}".format(expense_total) }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-receipt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 summary-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Net Total Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            💷 {{ "{:,}".format(net_total) }} EGP
+                        </div>
+                        <div class="text-xs text-muted">
+                            Revenue - Expenses
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Box -->
+<div class="search-box">
+    <h5 class="text-primary mb-3"><i class="fas fa-search"></i> Search Records</h5>
+    <form method="GET" action="/search-records">
+        <div class="row">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="q" placeholder="Search records by PC number, service name, expense name, staff, or amount..." value="">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search Records
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- PC Sessions -->
+<div class="card mb-4">
+    <div class="card-header section-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-desktop text-primary"></i> PC Sessions ({{ pc_records|length }})</h5>
+        <span class="record-count">Total: {{ "{:,}".format(pc_total) }} EGP</span>
+    </div>
+    <div class="card-body">
+        {% if pc_records %}
+            <div class="row">
+                {% for record in pc_records %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card record-card pc-card">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-desktop text-primary"></i> PC {{ record.get('pc', 'Unknown') }}
+                            </h6>
+                            <div class="record-info">
+                                <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                                {% if record.get('notes') %}
+                                <strong>Notes:</strong> {{ record.get('notes') }}<br>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group w-100 mt-3">
+                                <a href="/edit-pc-session/{{ record.get('session_id') }}" class="btn btn-sm btn-outline-primary btn-action">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="/delete-pc-session/{{ record.get('session_id') }}" 
+                                   class="btn btn-sm btn-outline-danger btn-action"
+                                   onclick="return confirm('Are you sure you want to delete this PC session?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-records">
+                <i class="fas fa-desktop fa-3x mb-3"></i>
+                <h5>No PC Sessions Found</h5>
+                <p>No PC sessions have been logged today.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Service Logs -->
+<div class="card mb-4">
+    <div class="card-header section-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-cogs text-success"></i> Service Logs ({{ service_records|length }})</h5>
+        <span class="record-count">Total: {{ "{:,}".format(service_total) }} EGP</span>
+    </div>
+    <div class="card-body">
+        {% if service_records %}
+            <div class="row">
+                {% for record in service_records %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card record-card service-card">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-cogs text-success"></i> {{ record.get('service', 'Unknown') }}
+                            </h6>
+                            <div class="record-info">
+                                <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                                {% if record.get('emoji') %}
+                                <strong>Emoji:</strong> {{ record.get('emoji') }}<br>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group w-100 mt-3">
+                                <a href="/edit-service-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-success btn-action">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="/delete-service-log/{{ record.get('log_id') }}" 
+                                   class="btn btn-sm btn-outline-danger btn-action"
+                                   onclick="return confirm('Are you sure you want to delete this service log?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-records">
+                <i class="fas fa-cogs fa-3x mb-3"></i>
+                <h5>No Service Logs Found</h5>
+                <p>No service logs have been recorded today.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Expense Logs -->
+<div class="card mb-4">
+    <div class="card-header section-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-receipt text-warning"></i> Expense Logs ({{ expense_records|length }})</h5>
+        <span class="record-count">Total: {{ "{:,}".format(expense_total) }} EGP</span>
+    </div>
+    <div class="card-body">
+        {% if expense_records %}
+            <div class="row">
+                {% for record in expense_records %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card record-card expense-card">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-receipt text-warning"></i> {{ record.get('name', 'Unknown') }}
+                            </h6>
+                            <div class="record-info">
+                                <strong>Amount:</strong> {{ "{:,}".format(record.get('amount', 0)) }} EGP<br>
+                                <strong>Staff:</strong> {{ record.get('staff', 'Unknown') }}<br>
+                                <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
+                            </div>
+                            <div class="btn-group w-100 mt-3">
+                                <a href="/edit-expense-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-warning btn-action">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="/delete-expense-log/{{ record.get('log_id') }}" 
+                                   class="btn btn-sm btn-outline-danger btn-action"
+                                   onclick="return confirm('Are you sure you want to delete this expense log?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-records">
+                <i class="fas fa-receipt fa-3x mb-3"></i>
+                <h5>No Expense Logs Found</h5>
+                <p>No expense logs have been recorded today.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+# Minimal requirements for basic functionality
+nextcord
+pymongo
+python-dotenv
+flask
+reportlab
+Pillow
+jinja2

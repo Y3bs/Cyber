@@ -53,6 +53,19 @@
                             <i class="fas fa-receipt"></i> Expenses
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="editDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-edit"></i> Edit Records
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('edit_records') }}">
+                                <i class="fas fa-list"></i> All Records
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search_records') }}">
+                                <i class="fas fa-search"></i> Search Records
+                            </a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" href="{{ url_for('history') }}">
                             <i class="fas fa-history"></i> History

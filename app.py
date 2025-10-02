@@ -4,7 +4,9 @@ import json
 import os
 from utils.database import (
     load_services, save_service, update_service, delete_service, 
-    save_logs, db
+    save_logs, db, get_pc_sessions, get_service_logs, get_expense_logs,
+    update_pc_session, update_service_log, update_expense_log,
+    delete_pc_session, delete_service_log, delete_expense_log
 )
 from utils.utils import load_data, save_data, calc_totals, cost_to_time
 
@@ -411,6 +413,388 @@ def api_summary():
         'services_count': len(data.get('services', [])),
         'expenses_count': len(data.get('expenses', []))
     })
+
+# ==================== EDIT FUNCTIONALITY ====================
+
+@app.route('/edit-records')
+def edit_records():
+    """Main edit records page"""
+    # Get current day data from JSON file (for today's records)
+    data = load_data()
+    current_pcs = data.get('pcs', [])
+    current_services = data.get('services', [])
+    current_expenses = data.get('expenses', [])
+    
+    # Get all records from MongoDB (for historical records)
+    mongo_pc_records = get_pc_sessions()
+    mongo_service_records = get_service_logs()
+    mongo_expense_records = get_expense_logs()
+    
+    # Combine current day records with MongoDB records, avoiding duplicates
+    pc_records = current_pcs.copy()
+    service_records = current_services.copy()
+    expense_records = current_expenses.copy()
+    
+    # Add MongoDB records that aren't already in current day
+    current_pc_ids = {record.get('session_id') for record in current_pcs if record.get('session_id')}
+    current_service_ids = {record.get('log_id') for record in current_services if record.get('log_id')}
+    current_expense_ids = {record.get('log_id') for record in current_expenses if record.get('log_id')}
+    
+    for record in mongo_pc_records:
+        if record.get('session_id') not in current_pc_ids:
+            pc_records.append(record)
+    
+    for record in mongo_service_records:
+        if record.get('log_id') not in current_service_ids:
+            service_records.append(record)
+    
+    for record in mongo_expense_records:
+        if record.get('log_id') not in current_expense_ids:
+            expense_records.append(record)
+    
+    # Calculate totals
+    pc_total = sum(record.get('amount', 0) for record in pc_records)
+    service_total = sum(record.get('amount', 0) for record in service_records)
+    expense_total = sum(record.get('amount', 0) for record in expense_records)
+    net_total = pc_total + service_total - expense_total
+    
+    return render_template('edit_records.html',
+                         pc_records=pc_records,
+                         service_records=service_records,
+                         expense_records=expense_records,
+                         pc_total=pc_total,
+                         service_total=service_total,
+                         expense_total=expense_total,
+                         net_total=net_total)
+
+@app.route('/edit-pc-session/<session_id>')
+def edit_pc_session_form(session_id):
+    """Edit PC session form"""
+    try:
+        # Get the specific PC session
+        pc_sessions = get_pc_sessions()
+        session = None
+        for s in pc_sessions:
+            if s.get('session_id') == session_id:
+                session = s
+                break
+        
+        if not session:
+            flash('PC session not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_pc_session.html', session=session)
+    except Exception as e:
+        flash(f'Error loading PC session: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-pc-session/<session_id>', methods=['POST'])
+def update_pc_session_route(session_id):
+    """Update PC session"""
+    try:
+        pc = request.form.get('pc')
+        amount = int(request.form.get('amount'))
+        notes = request.form.get('notes', '')
+        staff = request.form.get('staff', 'Web User')
+        
+        if not pc or amount <= 0:
+            flash('Please provide valid PC number and amount', 'error')
+            return redirect(url_for('edit_pc_session_form', session_id=session_id))
+        
+        # Update in MongoDB
+        update_data = {
+            "pc": pc,
+            "amount": amount,
+            "notes": notes,
+            "staff": staff
+        }
+        success = update_pc_session(session_id, update_data)
+        
+        if success:
+            # Update in JSON file
+            data = load_data()
+            for i, session in enumerate(data.get('pcs', [])):
+                if session.get('session_id') == session_id:
+                    data['pcs'][i].update(update_data)
+                    break
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash(f'PC session updated successfully!', 'success')
+        else:
+            flash('Failed to update PC session', 'error')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating PC session: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/edit-service-log/<log_id>')
+def edit_service_log_form(log_id):
+    """Edit service log form"""
+    try:
+        # Get the specific service log
+        service_logs = get_service_logs()
+        log = None
+        for l in service_logs:
+            if l.get('log_id') == log_id:
+                log = l
+                break
+        
+        if not log:
+            flash('Service log not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_service_log.html', log=log)
+    except Exception as e:
+        flash(f'Error loading service log: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-service-log/<log_id>', methods=['POST'])
+def update_service_log_route(log_id):
+    """Update service log"""
+    try:
+        service = request.form.get('service')
+        amount = int(request.form.get('amount'))
+        staff = request.form.get('staff', 'Web User')
+        
+        if not service or amount <= 0:
+            flash('Please provide valid service name and amount', 'error')
+            return redirect(url_for('edit_service_log_form', log_id=log_id))
+        
+        # Update in MongoDB
+        update_data = {
+            "service": service,
+            "amount": amount,
+            "staff": staff
+        }
+        success = update_service_log(log_id, update_data)
+        
+        if success:
+            # Update in JSON file
+            data = load_data()
+            for i, log in enumerate(data.get('services', [])):
+                if log.get('log_id') == log_id:
+                    data['services'][i].update(update_data)
+                    break
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash(f'Service log updated successfully!', 'success')
+        else:
+            flash('Failed to update service log', 'error')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating service log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/edit-expense-log/<log_id>')
+def edit_expense_log_form(log_id):
+    """Edit expense log form"""
+    try:
+        # Get the specific expense log
+        expense_logs = get_expense_logs()
+        log = None
+        for l in expense_logs:
+            if l.get('log_id') == log_id:
+                log = l
+                break
+        
+        if not log:
+            flash('Expense log not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_expense_log.html', log=log)
+    except Exception as e:
+        flash(f'Error loading expense log: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-expense-log/<log_id>', methods=['POST'])
+def update_expense_log_route(log_id):
+    """Update expense log"""
+    try:
+        name = request.form.get('name')
+        amount = int(request.form.get('amount'))
+        staff = request.form.get('staff', 'Web User')
+        
+        if not name or amount <= 0:
+            flash('Please provide valid expense name and amount', 'error')
+            return redirect(url_for('edit_expense_log_form', log_id=log_id))
+        
+        # Update in MongoDB
+        update_data = {
+            "name": name,
+            "amount": amount,
+            "staff": staff
+        }
+        success = update_expense_log(log_id, update_data)
+        
+        if success:
+            # Update in JSON file
+            data = load_data()
+            for i, log in enumerate(data.get('expenses', [])):
+                if log.get('log_id') == log_id:
+                    data['expenses'][i].update(update_data)
+                    break
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash(f'Expense log updated successfully!', 'success')
+        else:
+            flash('Failed to update expense log', 'error')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating expense log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+# ==================== DELETE FUNCTIONALITY ====================
+
+@app.route('/delete-pc-session/<session_id>')
+def delete_pc_session_route(session_id):
+    """Delete PC session"""
+    try:
+        success = delete_pc_session(session_id)
+        
+        if success:
+            # Remove from JSON file
+            data = load_data()
+            data['pcs'] = [s for s in data.get('pcs', []) if s.get('session_id') != session_id]
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash('PC session deleted successfully!', 'success')
+        else:
+            flash('Failed to delete PC session', 'error')
+        
+    except Exception as e:
+        flash(f'Error deleting PC session: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/delete-service-log/<log_id>')
+def delete_service_log_route(log_id):
+    """Delete service log"""
+    try:
+        success = delete_service_log(log_id)
+        
+        if success:
+            # Remove from JSON file
+            data = load_data()
+            data['services'] = [s for s in data.get('services', []) if s.get('log_id') != log_id]
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash('Service log deleted successfully!', 'success')
+        else:
+            flash('Failed to delete service log', 'error')
+        
+    except Exception as e:
+        flash(f'Error deleting service log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/delete-expense-log/<log_id>')
+def delete_expense_log_route(log_id):
+    """Delete expense log"""
+    try:
+        success = delete_expense_log(log_id)
+        
+        if success:
+            # Remove from JSON file
+            data = load_data()
+            data['expenses'] = [e for e in data.get('expenses', []) if e.get('log_id') != log_id]
+            
+            # Recalculate totals
+            data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+            save_data(data)
+            
+            flash('Expense log deleted successfully!', 'success')
+        else:
+            flash('Failed to delete expense log', 'error')
+        
+    except Exception as e:
+        flash(f'Error deleting expense log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+# ==================== SEARCH FUNCTIONALITY ====================
+
+@app.route('/search-records')
+def search_records():
+    """Search records page"""
+    query = request.args.get('q', '')
+    results = {'pcs': [], 'services': [], 'expenses': []}
+    
+    if query:
+        # Get current day data from JSON file
+        data = load_data()
+        current_pcs = data.get('pcs', [])
+        current_services = data.get('services', [])
+        current_expenses = data.get('expenses', [])
+        
+        # Get all records from MongoDB
+        mongo_pc_records = get_pc_sessions()
+        mongo_service_records = get_service_logs()
+        mongo_expense_records = get_expense_logs()
+        
+        # Combine current day records with MongoDB records, avoiding duplicates
+        pc_records = current_pcs.copy()
+        service_records = current_services.copy()
+        expense_records = current_expenses.copy()
+        
+        # Add MongoDB records that aren't already in current day
+        current_pc_ids = {record.get('session_id') for record in current_pcs if record.get('session_id')}
+        current_service_ids = {record.get('log_id') for record in current_services if record.get('log_id')}
+        current_expense_ids = {record.get('log_id') for record in current_expenses if record.get('log_id')}
+        
+        for record in mongo_pc_records:
+            if record.get('session_id') not in current_pc_ids:
+                pc_records.append(record)
+        
+        for record in mongo_service_records:
+            if record.get('log_id') not in current_service_ids:
+                service_records.append(record)
+        
+        for record in mongo_expense_records:
+            if record.get('log_id') not in current_expense_ids:
+                expense_records.append(record)
+        
+        search_lower = query.lower()
+        
+        results['pcs'] = [r for r in pc_records if 
+                         search_lower in r.get('pc', '').lower() or 
+                         search_lower in r.get('staff', '').lower() or
+                         search_lower in str(r.get('amount', 0))]
+        
+        results['services'] = [r for r in service_records if 
+                             search_lower in r.get('service', '').lower() or 
+                             search_lower in r.get('staff', '').lower() or
+                             search_lower in str(r.get('amount', 0))]
+        
+        results['expenses'] = [r for r in expense_records if 
+                             search_lower in r.get('name', '').lower() or 
+                             search_lower in r.get('staff', '').lower() or
+                             search_lower in str(r.get('amount', 0))]
+    
+    return render_template('search_records.html', query=query, results=results)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

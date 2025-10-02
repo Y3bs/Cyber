@@ -5,15 +5,27 @@
             "amount": 50,
             "staff": "Yousef",
             "time": "02 Oct 2025 06:03 PM"
+        },
+        {
+            "pc": "PC 1",
+            "amount": 15,
+            "staff": "Web User",
+            "time": "03 Oct 2025 01:24 AM"
+        },
+        {
+            "pc": "PC 3",
+            "amount": 40,
+            "staff": "Web User",
+            "time": "03 Oct 2025 01:31 AM"
         }
     ],
     "services": [],
     "expenses": [],
     "totals": {
-        "pcs": 50,
+        "pcs": 105,
         "services": 0,
         "expenses": 0,
-        "all": 50
+        "all": 105
     },
     "log_channel_id": 1423056591279882260
 }
