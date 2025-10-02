@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Service Management - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<!-- Add New Service Section -->
+<div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-plus-circle"></i> Add New Service
+                </h6>
+                <button class="btn btn-sm btn-success" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#addServiceForm" aria-expanded="false">
+                    <i class="fas fa-plus"></i> Add Service
+                </button>
+            </div>
+            <div class="collapse" id="addServiceForm">
+                <div class="card-body">
+                    <form action="{{ url_for('add_service') }}" method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="service_name" class="form-label">
+                                    <i class="fas fa-tag"></i> Service Name
+                                </label>
+                                <input type="text" class="form-control" id="service_name" name="service_name" 
+                                       placeholder="Enter service name" required>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="cost" class="form-label">
+                                    <i class="fas fa-money-bill"></i> Cost (EGP)
+                                </label>
+                                <input type="number" class="form-control" id="cost" name="cost" 
+                                       placeholder="Enter cost" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="emoji" class="form-label">
+                                    <i class="fas fa-smile"></i> Emoji
+                                </label>
+                                <input type="text" class="form-control" id="emoji" name="emoji" 
+                                       placeholder="🔧" maxlength="2" required>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="custom_cost" class="form-label">
+                                    <i class="fas fa-edit"></i> Custom Cost
+                                </label>
+                                <select class="form-select" id="custom_cost" name="custom_cost" required>
+                                    <option value="false">Fixed Price</option>
+                                    <option value="true">Custom Price Each Time</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="available" class="form-label">
+                                    <i class="fas fa-toggle-on"></i> Availability
+                                </label>
+                                <select class="form-select" id="available" name="available" required>
+                                    <option value="true">Available</option>
+                                    <option value="false">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary me-md-2" 
+                                    data-bs-toggle="collapse" data-bs-target="#addServiceForm">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Service
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cogs"></i> Services Management
+                </h6>
+                <div class="text-muted small">
+                    Total Services: {{ services|length }}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if services %}
+                    <div class="row">
+                        {% for service in services %}
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="card service-card h-100 {% if service.available %}border-success{% else %}border-danger{% endif %}">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <span class="me-2" style="font-size: 2rem;">{{ service.emoji }}</span>
+                                            <div class="flex-grow-1">
+                                                <h6 class="card-title mb-1">{{ service.name }}</h6>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge {% if service.available %}bg-success{% else %}bg-danger{% endif %} me-2">
+                                                        {% if service.available %}
+                                                            <i class="fas fa-check"></i> Available
+                                                        {% else %}
+                                                            <i class="fas fa-times"></i> Disabled
+                                                        {% endif %}
+                                                    </span>
+                                                    {% if service.custom_cost %}
+                                                        <span class="badge bg-info">
+                                                            <i class="fas fa-edit"></i> Custom Price
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <strong class="text-primary">
+                                                <i class="fas fa-money-bill"></i> 
+                                                {% if service.custom_cost %}
+                                                    Base: {{ service.cost }} EGP
+                                                {% else %}
+                                                    {{ service.cost }} EGP
+                                                {% endif %}
+                                            </strong>
+                                        </div>
+
+                                        <div class="mt-auto">
+                                            <!-- Edit Button (Full Width) -->
+                                            <div class="mb-2">
+                                                <a href="{{ url_for('edit_service_form', service_name=service.name) }}" 
+                                                   class="btn btn-sm btn-info w-100">
+                                                    <i class="fas fa-edit"></i> Edit Service
+                                                </a>
+                                            </div>
+                                            
+                                            <!-- Toggle and Delete Buttons -->
+                                            <div class="btn-group w-100" role="group">
+                                                <form action="{{ url_for('update_service_route', service_name=service.name) }}" 
+                                                      method="POST" style="flex: 1;">
+                                                    <input type="hidden" name="action" value="toggle">
+                                                    <button type="submit" class="btn btn-sm w-100 {% if service.available %}btn-warning{% else %}btn-success{% endif %}">
+                                                        {% if service.available %}
+                                                            <i class="fas fa-pause"></i> Disable
+                                                        {% else %}
+                                                            <i class="fas fa-play"></i> Enable
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                                
+                                                <form action="{{ url_for('update_service_route', service_name=service.name) }}" 
+                                                      method="POST" style="flex: 1;">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <button type="submit" class="btn btn-sm btn-danger w-100" 
+                                                            onclick="return confirm('Are you sure you want to delete the service \'{{ service.name }}\'? This action cannot be undone.')">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Services Available</h5>
+                        <p class="text-muted">Start by adding your first service using the form above.</p>
+                        <button class="btn btn-success" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#addServiceForm">
+                            <i class="fas fa-plus"></i> Add First Service
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Statistics -->
+{% if services %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-chart-pie"></i> Service Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-cogs fa-2x text-primary mb-2"></i>
+                            <h4 class="text-primary">{{ services|length }}</h4>
+                            <p class="text-muted mb-0">Total Services</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h4 class="text-success">{{ services|selectattr('available')|list|length }}</h4>
+                            <p class="text-muted mb-0">Available</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                            <h4 class="text-danger">{{ services|rejectattr('available')|list|length }}</h4>
+                            <p class="text-muted mb-0">Disabled</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3">
+                            <i class="fas fa-edit fa-2x text-info mb-2"></i>
+                            <h4 class="text-info">{{ services|selectattr('custom_cost')|list|length }}</h4>
+                            <p class="text-muted mb-0">Custom Price</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-hide collapse after successful form submission
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category == 'success' and 'added successfully' in message %}
+                // Reset form and hide collapse
+                document.getElementById('addServiceForm').classList.remove('show');
+                document.querySelector('#addServiceForm form').reset();
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+// Form validation
+document.querySelector('#addServiceForm form').addEventListener('submit', function(e) {
+    const serviceName = document.getElementById('service_name').value.trim();
+    const cost = document.getElementById('cost').value;
+    const emoji = document.getElementById('emoji').value.trim();
+    
+    if (!serviceName) {
+        e.preventDefault();
+        alert('Please enter a service name.');
+        return;
+    }
+    
+    if (cost < 0) {
+        e.preventDefault();
+        alert('Cost cannot be negative.');
+        return;
+    }
+    
+    if (!emoji) {
+        e.preventDefault();
+        alert('Please enter an emoji for the service.');
+        return;
+    }
+});
+
+// Emoji validation
+document.getElementById('emoji').addEventListener('input', function(e) {
+    const value = e.target.value;
+    // Remove non-emoji characters (basic validation)
+    if (value.length > 2) {
+        e.target.value = value.slice(0, 2);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Service Logging - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-clipboard-list"></i> Service Logging Panel
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Select a service from the available options below to log it.
+                </p>
+
+                {% if services %}
+                    <form action="{{ url_for('log_service') }}" method="POST" id="serviceForm">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="service_name" class="form-label">
+                                    <i class="fas fa-cogs"></i> Select Service
+                                </label>
+                                <select class="form-select" id="service_name" name="service_name" required onchange="updateServiceDetails()">
+                                    <option value="">Choose a service...</option>
+                                    {% for service in services %}
+                                        <option value="{{ service.name }}" 
+                                                data-cost="{{ service.cost }}" 
+                                                data-emoji="{{ service.emoji }}"
+                                                data-custom="{{ service.custom_cost|lower }}">
+                                            {{ service.emoji }} {{ service.name }} - {{ service.cost }} EGP
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="staff" class="form-label">
+                                    <i class="fas fa-user"></i> Staff Member
+                                </label>
+                                <input type="text" class="form-control" id="staff" name="staff" 
+                                       placeholder="Enter staff name" value="Web User">
+                            </div>
+                        </div>
+
+                        <!-- Custom Cost Input (hidden by default) -->
+                        <div class="row" id="customCostRow" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <label for="custom_cost" class="form-label">
+                                    <i class="fas fa-edit"></i> Custom Cost (EGP)
+                                </label>
+                                <input type="number" class="form-control" id="custom_cost" name="custom_cost" 
+                                       placeholder="Enter custom cost" min="1">
+                                <div class="form-text text-info">
+                                    <i class="fas fa-info-circle"></i> This service allows custom pricing per session.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Service Details Display -->
+                        <div class="row" id="serviceDetails" style="display: none;">
+                            <div class="col-12 mb-3">
+                                <div class="alert alert-info">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <span id="serviceEmoji" style="font-size: 2rem;"></span>
+                                        </div>
+                                        <div class="col">
+                                            <h6 id="serviceName" class="mb-1"></h6>
+                                            <p id="serviceCost" class="mb-0"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Log Service
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5 class="text-muted">No Services Available</h5>
+                        <p class="text-muted">Please add and enable services before logging them.</p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">
+                            <i class="fas fa-cogs"></i> Manage Services
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Services Grid -->
+{% if services %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-th-large"></i> Available Services
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for service in services %}
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                            <button type="button" class="btn btn-outline-success btn-block service-select-btn h-100" 
+                                    data-service="{{ service.name }}" onclick="selectService('{{ service.name }}')">
+                                <div class="p-2">
+                                    <div style="font-size: 2rem;">{{ service.emoji }}</div>
+                                    <div class="small font-weight-bold">{{ service.name }}</div>
+                                    <div class="text-xs text-muted">
+                                        {% if service.custom_cost %}
+                                            Base: {{ service.cost }} EGP
+                                            <br><i class="fas fa-edit"></i> Custom
+                                        {% else %}
+                                            {{ service.cost }} EGP
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Quick Select:</strong> Click on any service above to automatically select it in the form.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Service Statistics -->
+{% if services %}
+<div class="row mt-4">
+    <div class="col-lg-6 mx-auto">
+        <div class="card shadow border-success">
+            <div class="card-header bg-success text-white py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-bar"></i> Service Quick Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <i class="fas fa-cogs fa-2x text-success mb-2"></i>
+                        <h4 class="text-success">{{ services|length }}</h4>
+                        <p class="text-muted mb-0">Available Services</p>
+                    </div>
+                    <div class="col-6">
+                        <i class="fas fa-money-bill fa-2x text-info mb-2"></i>
+                        <h4 class="text-info">
+                            {% set price_range = services|map(attribute='cost')|list %}
+                            {% if price_range %}
+                                {{ price_range|min }}-{{ price_range|max }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted mb-0">Price Range (EGP)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateServiceDetails() {
+    const select = document.getElementById('service_name');
+    const option = select.options[select.selectedIndex];
+    const customCostRow = document.getElementById('customCostRow');
+    const serviceDetails = document.getElementById('serviceDetails');
+    
+    if (option.value) {
+        const isCustom = option.dataset.custom === 'true';
+        const cost = option.dataset.cost;
+        const emoji = option.dataset.emoji;
+        const name = option.value;
+        
+        // Show/hide custom cost input
+        if (isCustom) {
+            customCostRow.style.display = 'block';
+            document.getElementById('custom_cost').required = true;
+        } else {
+            customCostRow.style.display = 'none';
+            document.getElementById('custom_cost').required = false;
+            document.getElementById('custom_cost').value = '';
+        }
+        
+        // Update service details display
+        document.getElementById('serviceEmoji').textContent = emoji;
+        document.getElementById('serviceName').textContent = name;
+        document.getElementById('serviceCost').innerHTML = isCustom ? 
+            `<strong>Base Cost:</strong> ${cost} EGP <span class="badge bg-info ms-2"><i class="fas fa-edit"></i> Custom Price</span>` :
+            `<strong>Cost:</strong> ${cost} EGP`;
+        
+        serviceDetails.style.display = 'block';
+        
+        // Update visual feedback for grid
+        updateServiceGridSelection(name);
+    } else {
+        customCostRow.style.display = 'none';
+        serviceDetails.style.display = 'none';
+        document.getElementById('custom_cost').required = false;
+        clearServiceGridSelection();
+    }
+}
+
+function selectService(serviceName) {
+    // Update the dropdown
+    document.getElementById('service_name').value = serviceName;
+    
+    // Trigger the change event
+    updateServiceDetails();
+    
+    // Focus on appropriate input
+    const customCostRow = document.getElementById('customCostRow');
+    if (customCostRow.style.display !== 'none') {
+        document.getElementById('custom_cost').focus();
+    } else {
+        document.getElementById('staff').focus();
+    }
+}
+
+function updateServiceGridSelection(serviceName) {
+    document.querySelectorAll('.service-select-btn').forEach(btn => {
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+    });
+    
+    const selectedBtn = document.querySelector(`[data-service="${serviceName}"]`);
+    if (selectedBtn) {
+        selectedBtn.classList.remove('btn-outline-success');
+        selectedBtn.classList.add('btn-success');
+    }
+}
+
+function clearServiceGridSelection() {
+    document.querySelectorAll('.service-select-btn').forEach(btn => {
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+    });
+}
+
+// Form validation
+document.getElementById('serviceForm').addEventListener('submit', function(e) {
+    const serviceName = document.getElementById('service_name').value;
+    const customCostRow = document.getElementById('customCostRow');
+    const customCost = document.getElementById('custom_cost').value;
+    
+    if (!serviceName) {
+        e.preventDefault();
+        alert('Please select a service.');
+        return;
+    }
+    
+    if (customCostRow.style.display !== 'none' && (!customCost || customCost <= 0)) {
+        e.preventDefault();
+        alert('Please enter a valid custom cost for this service.');
+        return;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<!-- Quick Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            PC Sessions Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            💷 {{ pcs_total }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-desktop fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Services Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            💷 {{ services_total }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cogs fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Expenses Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            💷 {{ expenses_total }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-receipt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Net Total Today
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            💷 {{ total_all }} EGP
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('pc_logging') }}" class="btn btn-primary btn-block">
+                            <i class="fas fa-desktop"></i><br>
+                            <small>Log PC Session</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('service_logging') }}" class="btn btn-success btn-block">
+                            <i class="fas fa-clipboard-list"></i><br>
+                            <small>Log Service</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('expenses') }}" class="btn btn-warning btn-block">
+                            <i class="fas fa-receipt"></i><br>
+                            <small>Log Expense</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('services') }}" class="btn btn-info btn-block">
+                            <i class="fas fa-cogs"></i><br>
+                            <small>Manage Services</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('history') }}" class="btn btn-secondary btn-block">
+                            <i class="fas fa-history"></i><br>
+                            <small>View History</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <form action="{{ url_for('save_logs_route') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to save and archive today\'s logs? This will reset all counters.')">
+                                <i class="fas fa-save"></i><br>
+                                <small>Save & Archive</small>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="row">
+    <!-- Recent PC Sessions -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent PC Sessions</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_pcs %}
+                    {% for session in recent_pcs %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="mr-3">
+                                <i class="fas fa-desktop text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small">{{ session.pc }}</div>
+                                <div class="text-xs text-gray-500">{{ session.time }}</div>
+                            </div>
+                            <div class="font-weight-bold">
+                                💷 {{ session.amount }} EGP
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No PC sessions today</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('pc_logging') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Log PC Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Services -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">Recent Services</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_services %}
+                    {% for service in recent_services %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="mr-3">
+                                <i class="fas fa-cogs text-success"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small">{{ service.service }}</div>
+                                <div class="text-xs text-gray-500">{{ service.time }}</div>
+                            </div>
+                            <div class="font-weight-bold">
+                                💷 {{ service.amount }} EGP
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No services logged today</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('service_logging') }}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus"></i> Log Service
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Expenses -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">Recent Expenses</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                    {% for expense in recent_expenses %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="mr-3">
+                                <i class="fas fa-receipt text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small">{{ expense.name }}</div>
+                                <div class="text-xs text-gray-500">{{ expense.get('time', 'N/A') }}</div>
+                            </div>
+                            <div class="font-weight-bold text-danger">
+                                -💷 {{ expense.amount }} EGP
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No expenses logged today</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-plus"></i> Log Expense
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services Status -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">System Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-database fa-2x text-success mb-2"></i>
+                            <h6>Database</h6>
+                            <span class="badge badge-success">Connected</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-cogs fa-2x text-info mb-2"></i>
+                            <h6>Services Available</h6>
+                            <span class="badge badge-info">{{ services_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-desktop fa-2x text-primary mb-2"></i>
+                            <h6>PCs Available</h6>
+                            <span class="badge badge-primary">14</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-day fa-2x text-warning mb-2"></i>
+                            <h6>Today</h6>
+                            <span class="badge badge-warning">{{ moment().format('MMM DD, YYYY') if moment else 'Active' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh summary data every 30 seconds
+setInterval(function() {
+    fetch('/api/summary')
+        .then(response => response.json())
+        .then(data => {
+            // Update summary cards if needed
+            console.log('Summary updated:', data);
+        })
+        .catch(error => console.error('Error fetching summary:', error));
+}, 30000);
+</script>
+{% endblock %}

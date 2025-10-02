@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Historical Logs - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-history"></i> Historical Daily Logs
+                </h6>
+                <div class="text-muted small">
+                    Total Days: {{ logs|length }}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if logs %}
+                    <div class="accordion" id="historyAccordion">
+                        {% for log in logs %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" 
+                                            aria-expanded="{% if loop.first %}true{% else %}false{% endif %}" 
+                                            aria-controls="collapse{{ loop.index }}">
+                                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
+                                            <div>
+                                                <i class="fas fa-calendar-day me-2"></i>
+                                                <strong>{{ log.date }}</strong>
+                                            </div>
+                                            <div class="d-flex gap-3">
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-desktop"></i> 
+                                                    PC: {{ log.totals.pcs }} EGP
+                                                </span>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-cogs"></i> 
+                                                    Services: {{ log.totals.services }} EGP
+                                                </span>
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-receipt"></i> 
+                                                    Expenses: {{ log.totals.get('expenses', 0) }} EGP
+                                                </span>
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-dollar-sign"></i> 
+                                                    Total: {{ log.totals.all }} EGP
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                                     aria-labelledby="heading{{ loop.index }}" data-bs-parent="#historyAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <!-- PC Sessions -->
+                                            <div class="col-lg-4 mb-4">
+                                                <div class="card border-primary h-100">
+                                                    <div class="card-header bg-primary text-white">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-desktop"></i> PC Sessions ({{ log.pcs|length }})
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        {% if log.pcs %}
+                                                            {% for session in log.pcs %}
+                                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <div>
+                                                                        <strong>{{ session.pc }}</strong><br>
+                                                                        <small class="text-muted">{{ session.time }}</small><br>
+                                                                        <small class="text-info">{{ session.staff }}</small>
+                                                                    </div>
+                                                                    <span class="badge bg-primary">
+                                                                        💷 {{ session.amount }} EGP
+                                                                    </span>
+                                                                </div>
+                                                                {% if not loop.last %}<hr class="my-2">{% endif %}
+                                                            {% endfor %}
+                                                            <div class="mt-3 pt-2 border-top">
+                                                                <strong>Total: 💷 {{ log.totals.pcs }} EGP</strong>
+                                                            </div>
+                                                        {% else %}
+                                                            <p class="text-muted text-center">No PC sessions</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Services -->
+                                            <div class="col-lg-4 mb-4">
+                                                <div class="card border-success h-100">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-cogs"></i> Services ({{ log.services|length }})
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        {% if log.services %}
+                                                            {% for service in log.services %}
+                                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <div>
+                                                                        <strong>{{ service.service }}</strong><br>
+                                                                        <small class="text-muted">{{ service.time }}</small><br>
+                                                                        <small class="text-info">{{ service.staff }}</small>
+                                                                    </div>
+                                                                    <span class="badge bg-success">
+                                                                        💷 {{ service.amount }} EGP
+                                                                    </span>
+                                                                </div>
+                                                                {% if not loop.last %}<hr class="my-2">{% endif %}
+                                                            {% endfor %}
+                                                            <div class="mt-3 pt-2 border-top">
+                                                                <strong>Total: 💷 {{ log.totals.services }} EGP</strong>
+                                                            </div>
+                                                        {% else %}
+                                                            <p class="text-muted text-center">No services logged</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Expenses -->
+                                            <div class="col-lg-4 mb-4">
+                                                <div class="card border-warning h-100">
+                                                    <div class="card-header bg-warning text-dark">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-receipt"></i> Expenses ({{ (log.expenses|default([])|length) }})
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        {% if log.expenses and log.expenses|length > 0 %}
+                                                            {% for expense in log.expenses %}
+                                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <div>
+                                                                        <strong>{{ expense.name }}</strong><br>
+                                                                        {% if expense.get('time') %}
+                                                                            <small class="text-muted">{{ expense.time }}</small><br>
+                                                                        {% endif %}
+                                                                        {% if expense.get('staff') %}
+                                                                            <small class="text-info">{{ expense.staff }}</small>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    <span class="badge bg-danger">
+                                                                        -💷 {{ expense.amount }} EGP
+                                                                    </span>
+                                                                </div>
+                                                                {% if not loop.last %}<hr class="my-2">{% endif %}
+                                                            {% endfor %}
+                                                            <div class="mt-3 pt-2 border-top">
+                                                                <strong class="text-danger">Total: -💷 {{ log.totals.get('expenses', 0) }} EGP</strong>
+                                                            </div>
+                                                        {% else %}
+                                                            <p class="text-muted text-center">No expenses logged</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Daily Summary -->
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title">
+                                                            <i class="fas fa-chart-line"></i> Daily Summary for {{ log.date }}
+                                                        </h6>
+                                                        <div class="row text-center">
+                                                            <div class="col-md-3">
+                                                                <div class="border rounded p-2">
+                                                                    <i class="fas fa-desktop text-primary"></i>
+                                                                    <div class="fw-bold">{{ log.pcs|length }}</div>
+                                                                    <small>PC Sessions</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="border rounded p-2">
+                                                                    <i class="fas fa-cogs text-success"></i>
+                                                                    <div class="fw-bold">{{ log.services|length }}</div>
+                                                                    <small>Services</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="border rounded p-2">
+                                                                    <i class="fas fa-receipt text-warning"></i>
+                                                                    <div class="fw-bold">{{ (log.expenses|default([])|length) }}</div>
+                                                                    <small>Expenses</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="border rounded p-2 {% if log.totals.all >= 0 %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                                                    <i class="fas fa-dollar-sign"></i>
+                                                                    <div class="fw-bold">{{ log.totals.all }}</div>
+                                                                    <small>Net Total (EGP)</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Historical Data</h5>
+                        <p class="text-muted">No daily logs have been archived yet. Start logging activities and save them to see historical data here.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Statistics -->
+{% if logs %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-chart-bar"></i> Overall Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set total_pcs = logs|sum(attribute='totals.pcs') %}
+                    {% set total_services = logs|sum(attribute='totals.services') %}
+                    {% set total_expenses = logs|sum(attribute='totals.expenses') %}
+                    {% set total_all = logs|sum(attribute='totals.all') %}
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-primary h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-desktop fa-2x text-primary mb-2"></i>
+                                <h4 class="text-primary">{{ total_pcs }}</h4>
+                                <p class="text-muted mb-0">Total PC Revenue (EGP)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-success h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-cogs fa-2x text-success mb-2"></i>
+                                <h4 class="text-success">{{ total_services }}</h4>
+                                <p class="text-muted mb-0">Total Service Revenue (EGP)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-warning h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-receipt fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning">{{ total_expenses }}</h4>
+                                <p class="text-muted mb-0">Total Expenses (EGP)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-{% if total_all >= 0 %}success{% else %}danger{% endif %} h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-dollar-sign fa-2x text-{% if total_all >= 0 %}success{% else %}danger{% endif %} mb-2"></i>
+                                <h4 class="text-{% if total_all >= 0 %}success{% else %}danger{% endif %}">{{ total_all }}</h4>
+                                <p class="text-muted mb-0">Overall Net Total (EGP)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Daily Averages</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>PC Revenue:</strong> {{ (total_pcs / logs|length)|round|int }} EGP/day</li>
+                                    <li><strong>Service Revenue:</strong> {{ (total_services / logs|length)|round|int }} EGP/day</li>
+                                    <li><strong>Expenses:</strong> {{ (total_expenses / logs|length)|round|int }} EGP/day</li>
+                                    <li><strong>Net Profit:</strong> {{ (total_all / logs|length)|round|int }} EGP/day</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Business Insights</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Operating Days:</strong> {{ logs|length }}</li>
+                                    <li><strong>Revenue Streams:</strong> PC Sessions & Services</li>
+                                    <li><strong>Profit Margin:</strong> 
+                                        {% if (total_pcs + total_services) > 0 %}
+                                            {{ ((total_all / (total_pcs + total_services)) * 100)|round|int }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </li>
+                                    <li><strong>Best Revenue Source:</strong> 
+                                        {% if total_pcs > total_services %}
+                                            PC Sessions
+                                        {% elif total_services > total_pcs %}
+                                            Services
+                                        {% else %}
+                                            Equal Split
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-expand the most recent day's log
+document.addEventListener('DOMContentLoaded', function() {
+    const firstAccordionItem = document.querySelector('#collapse1');
+    if (firstAccordionItem) {
+        // Already handled by Bootstrap show class in template
+    }
+});
+</script>
+{% endblock %}

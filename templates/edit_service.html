@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Service - {{ service.name }} - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-edit"></i> Edit Service: {{ service.name }}
+                </h6>
+                <a href="{{ url_for('services') }}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Services
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Current Service Display -->
+                <div class="alert alert-info mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span style="font-size: 2rem;">{{ service.emoji }}</span>
+                        </div>
+                        <div class="col">
+                            <h6 class="mb-1">Current Service Details</h6>
+                            <p class="mb-0">
+                                <strong>{{ service.name }}</strong> - 
+                                {{ service.cost }} EGP
+                                {% if service.custom_cost %}
+                                    <span class="badge bg-info ms-2">Custom Price</span>
+                                {% endif %}
+                                <span class="badge {% if service.available %}bg-success{% else %}bg-danger{% endif %} ms-2">
+                                    {% if service.available %}Available{% else %}Disabled{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <form action="{{ url_for('update_service_route', service_name=service.name) }}" method="POST" id="editServiceForm">
+                    <input type="hidden" name="action" value="edit">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="service_name" class="form-label">
+                                <i class="fas fa-tag"></i> Service Name
+                            </label>
+                            <input type="text" class="form-control" id="service_name" name="service_name" 
+                                   value="{{ service.name }}" placeholder="Enter service name" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> Changing the name will create a new service record
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="cost" class="form-label">
+                                <i class="fas fa-money-bill"></i> Cost (EGP)
+                            </label>
+                            <input type="number" class="form-control" id="cost" name="cost" 
+                                   value="{{ service.cost }}" placeholder="Enter cost" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="emoji" class="form-label">
+                                <i class="fas fa-smile"></i> Emoji
+                            </label>
+                            <input type="text" class="form-control" id="emoji" name="emoji" 
+                                   value="{{ service.emoji }}" placeholder="🔧" maxlength="2" required>
+                            <div class="form-text">
+                                Click to see emoji preview: <span id="emojiPreview" style="font-size: 1.5rem;">{{ service.emoji }}</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="custom_cost" class="form-label">
+                                <i class="fas fa-edit"></i> Custom Cost
+                            </label>
+                            <select class="form-select" id="custom_cost" name="custom_cost" required>
+                                <option value="false" {% if not service.custom_cost %}selected{% endif %}>Fixed Price</option>
+                                <option value="true" {% if service.custom_cost %}selected{% endif %}>Custom Price Each Time</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-question-circle"></i> Allow different pricing per session?
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="available" class="form-label">
+                                <i class="fas fa-toggle-on"></i> Availability
+                            </label>
+                            <select class="form-select" id="available" name="available" required>
+                                <option value="true" {% if service.available %}selected{% endif %}>Available</option>
+                                <option value="false" {% if not service.available %}selected{% endif %}>Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-eye"></i> Live Preview
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="servicePreview" class="d-flex align-items-center">
+                                        <span id="previewEmoji" style="font-size: 2rem;" class="me-3">{{ service.emoji }}</span>
+                                        <div>
+                                            <h6 id="previewName" class="mb-1">{{ service.name }}</h6>
+                                            <div class="d-flex align-items-center">
+                                                <span id="previewCost" class="me-2">{{ service.cost }} EGP</span>
+                                                <span id="previewCustom" class="badge bg-info me-2" {% if not service.custom_cost %}style="display: none;"{% endif %}>
+                                                    <i class="fas fa-edit"></i> Custom Price
+                                                </span>
+                                                <span id="previewStatus" class="badge {% if service.available %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {% if service.available %}Available{% else %}Disabled{% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <div>
+                            <a href="{{ url_for('services') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger me-2" onclick="confirmDelete()">
+                                <i class="fas fa-trash"></i> Delete Service
+                            </button>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Update Service
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Hidden Delete Form -->
+                <form id="deleteForm" action="{{ url_for('update_service_route', service_name=service.name) }}" method="POST" style="display: none;">
+                    <input type="hidden" name="action" value="delete">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change History/Warning -->
+<div class="row mt-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Important Notes
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Name Changes:</strong> Changing the service name will create a new record and remove the old one.</li>
+                    <li><strong>Historical Data:</strong> Past service logs will retain the original service name.</li>
+                    <li><strong>Availability:</strong> Disabled services won't appear in the service logging interface.</li>
+                    <li><strong>Custom Pricing:</strong> When enabled, staff can enter different prices for each session.</li>
+                    <li><strong>Delete Warning:</strong> Deleting a service cannot be undone, but historical logs are preserved.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Real-time preview updates
+function updatePreview() {
+    const name = document.getElementById('service_name').value || 'Service Name';
+    const cost = document.getElementById('cost').value || '0';
+    const emoji = document.getElementById('emoji').value || '🔧';
+    const customCost = document.getElementById('custom_cost').value === 'true';
+    const available = document.getElementById('available').value === 'true';
+    
+    // Update preview
+    document.getElementById('previewName').textContent = name;
+    document.getElementById('previewCost').textContent = cost + ' EGP';
+    document.getElementById('previewEmoji').textContent = emoji;
+    document.getElementById('emojiPreview').textContent = emoji;
+    
+    // Update custom cost badge
+    const customBadge = document.getElementById('previewCustom');
+    if (customCost) {
+        customBadge.style.display = 'inline-block';
+    } else {
+        customBadge.style.display = 'none';
+    }
+    
+    // Update status badge
+    const statusBadge = document.getElementById('previewStatus');
+    if (available) {
+        statusBadge.className = 'badge bg-success';
+        statusBadge.textContent = 'Available';
+    } else {
+        statusBadge.className = 'badge bg-danger';
+        statusBadge.textContent = 'Disabled';
+    }
+}
+
+// Add event listeners for real-time preview
+document.getElementById('service_name').addEventListener('input', updatePreview);
+document.getElementById('cost').addEventListener('input', updatePreview);
+document.getElementById('emoji').addEventListener('input', updatePreview);
+document.getElementById('custom_cost').addEventListener('change', updatePreview);
+document.getElementById('available').addEventListener('change', updatePreview);
+
+// Emoji validation
+document.getElementById('emoji').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value.length > 2) {
+        e.target.value = value.slice(0, 2);
+    }
+    updatePreview();
+});
+
+// Form validation
+document.getElementById('editServiceForm').addEventListener('submit', function(e) {
+    const serviceName = document.getElementById('service_name').value.trim();
+    const cost = document.getElementById('cost').value;
+    const emoji = document.getElementById('emoji').value.trim();
+    
+    if (!serviceName) {
+        e.preventDefault();
+        alert('Please enter a service name.');
+        document.getElementById('service_name').focus();
+        return;
+    }
+    
+    if (cost < 0) {
+        e.preventDefault();
+        alert('Cost cannot be negative.');
+        document.getElementById('cost').focus();
+        return;
+    }
+    
+    if (!emoji) {
+        e.preventDefault();
+        alert('Please enter an emoji for the service.');
+        document.getElementById('emoji').focus();
+        return;
+    }
+    
+    // Confirm if name is being changed
+    const originalName = '{{ service.name }}';
+    if (serviceName !== originalName) {
+        if (!confirm(`You are changing the service name from "${originalName}" to "${serviceName}". This will create a new service record. Are you sure?`)) {
+            e.preventDefault();
+            return;
+        }
+    }
+});
+
+// Delete confirmation
+function confirmDelete() {
+    const serviceName = '{{ service.name }}';
+    if (confirm(`Are you sure you want to delete the service "${serviceName}"?\n\nThis action cannot be undone, but historical logs will be preserved.`)) {
+        if (confirm('This is your final warning. Are you absolutely sure you want to delete this service?')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+}
+
+// Initialize preview on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 's':
+                e.preventDefault();
+                document.getElementById('editServiceForm').submit();
+                break;
+            case 'Escape':
+                window.location.href = '{{ url_for("services") }}';
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

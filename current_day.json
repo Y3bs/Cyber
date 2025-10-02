@@ -1,64 +1,19 @@
 {
     "pcs": [
         {
-            "pc": "PC 3",
-            "amount": 45,
-            "staff": "(\u2310\u25a0_\u25a0)\u2122",
-            "time": "01 Oct 2025 03:20 PM"
-        },
-        {
-            "pc": "PC 4",
-            "amount": 567,
-            "staff": "(\u2310\u25a0_\u25a0)\u2122",
-            "time": "01 Oct 2025 03:24 PM"
+            "pc": "PC 14",
+            "amount": 50,
+            "staff": "Yousef",
+            "time": "02 Oct 2025 06:03 PM"
         }
     ],
     "services": [],
-    "expenses": [
-        {
-            "name": "\u0645\u0639\u0637\u0631",
-            "amount": 55
-        },
-        {
-            "name": "\u0645\u0639\u0637\u0631",
-            "amount": 55
-        },
-        {
-            "name": "\u0645\u0639\u0637\u0631",
-            "amount": 77
-        },
-        {
-            "name": "electricity",
-            "amount": 200
-        },
-        {
-            "name": "test",
-            "amount": 10,
-            "expenses": "not test"
-        },
-        {
-            "name": "test",
-            "amount": 15,
-            "expenses": "after edit"
-        },
-        {
-            "name": "after edit",
-            "amount": 15
-        },
-        {
-            "name": "again",
-            "amount": 15
-        },
-        {
-            "name": "not gg",
-            "amount": 40
-        }
-    ],
+    "expenses": [],
     "totals": {
-        "pcs": 612,
+        "pcs": 50,
         "services": 0,
-        "expenses": 492,
-        "all": 120
+        "expenses": 0,
+        "all": 50
     },
     "log_channel_id": 1423056591279882260
 }

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Management - Cyber Cafe Management{% endblock %}
+
+{% block content %}
+<!-- Add New Expense Section -->
+<div class="row mb-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-receipt"></i> Expense Logging Panel
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    All your expenses in one place. Just fill out the form below to log a new expense.
+                </p>
+
+                <form action="{{ url_for('log_expense') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="expense_name" class="form-label">
+                                <i class="fas fa-shopping-bag"></i> Expense Name
+                            </label>
+                            <input type="text" class="form-control" id="expense_name" name="expense_name" 
+                                   placeholder="Enter expense description" required>
+                            <div class="form-text">
+                                E.g., Electricity bill, Office supplies, Rent, etc.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="cost" class="form-label">
+                                <i class="fas fa-money-bill"></i> Cost (EGP)
+                            </label>
+                            <input type="number" class="form-control" id="cost" name="cost" 
+                                   placeholder="Enter amount in EGP" min="1" required>
+                            <div class="form-text text-danger">
+                                <i class="fas fa-exclamation-triangle"></i> This will be deducted from total income
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staff" class="form-label">
+                                <i class="fas fa-user"></i> Logged By
+                            </label>
+                            <input type="text" class="form-control" id="staff" name="staff" 
+                                   placeholder="Enter staff name" value="Web User">
+                        </div>
+
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="w-100">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="fas fa-save"></i> Log Expense
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Expenses -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-danger">
+                    <i class="fas fa-list"></i> Today's Expenses
+                </h6>
+                <div class="text-muted small">
+                    Total: {{ expenses|sum(attribute='amount') }} EGP | Count: {{ expenses|length }}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if expenses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col"><i class="fas fa-shopping-bag"></i> Expense</th>
+                                    <th scope="col"><i class="fas fa-money-bill"></i> Amount</th>
+                                    <th scope="col"><i class="fas fa-user"></i> Logged By</th>
+                                    <th scope="col"><i class="fas fa-clock"></i> Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in expenses %}
+                                    <tr>
+                                        <th scope="row">{{ loop.index }}</th>
+                                        <td>
+                                            <i class="fas fa-receipt text-warning me-2"></i>
+                                            {{ expense.name }}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                -💷 {{ expense.amount }} EGP
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-user text-muted me-1"></i>
+                                            {{ expense.get('staff', 'Unknown') }}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ expense.get('time', 'N/A') }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2">Total Expenses Today</th>
+                                    <th colspan="3">
+                                        <span class="badge bg-danger fs-6">
+                                            -💷 {{ expenses|sum(attribute='amount') }} EGP
+                                        </span>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Expenses Logged Today</h5>
+                        <p class="text-muted">Great! No expenses have been recorded for today.</p>
+                        <div class="text-success">
+                            <i class="fas fa-check-circle"></i> Keep tracking your expenses to maintain better financial control.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Categories (Common Expenses) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-tags"></i> Quick Expense Categories
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Electricity Bill')">
+                            <i class="fas fa-bolt fa-2x mb-2"></i><br>
+                            <small>Electricity</small>
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Internet Bill')">
+                            <i class="fas fa-wifi fa-2x mb-2"></i><br>
+                            <small>Internet</small>
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Rent')">
+                            <i class="fas fa-home fa-2x mb-2"></i><br>
+                            <small>Rent</small>
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Office Supplies')">
+                            <i class="fas fa-paperclip fa-2x mb-2"></i><br>
+                            <small>Supplies</small>
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Maintenance')">
+                            <i class="fas fa-tools fa-2x mb-2"></i><br>
+                            <small>Maintenance</small>
+                        </button>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <button type="button" class="btn btn-outline-info btn-block expense-category-btn" 
+                                onclick="selectExpenseCategory('Food & Beverages')">
+                            <i class="fas fa-coffee fa-2x mb-2"></i><br>
+                            <small>Food</small>
+                        </button>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Quick Select:</strong> Click on any category above to automatically fill the expense name.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Statistics -->
+{% if expenses %}
+<div class="row mt-4">
+    <div class="col-lg-6 mx-auto">
+        <div class="card shadow border-warning">
+            <div class="card-header bg-warning text-dark py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-pie"></i> Today's Expense Analysis
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <i class="fas fa-receipt fa-2x text-warning mb-2"></i>
+                        <h4 class="text-warning">{{ expenses|length }}</h4>
+                        <p class="text-muted mb-0">Total Items</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-money-bill fa-2x text-danger mb-2"></i>
+                        <h4 class="text-danger">{{ expenses|sum(attribute='amount') }}</h4>
+                        <p class="text-muted mb-0">Total Cost (EGP)</p>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-calculator fa-2x text-info mb-2"></i>
+                        <h4 class="text-info">
+                            {% if expenses|length > 0 %}
+                                {{ (expenses|sum(attribute='amount') / expenses|length)|round|int }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted mb-0">Average (EGP)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectExpenseCategory(categoryName) {
+    // Update the expense name input
+    document.getElementById('expense_name').value = categoryName;
+    
+    // Update visual feedback
+    document.querySelectorAll('.expense-category-btn').forEach(btn => {
+        btn.classList.remove('btn-info');
+        btn.classList.add('btn-outline-info');
+    });
+    
+    // Highlight the selected category
+    event.target.closest('.expense-category-btn').classList.remove('btn-outline-info');
+    event.target.closest('.expense-category-btn').classList.add('btn-info');
+    
+    // Focus on cost input
+    document.getElementById('cost').focus();
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const expenseName = document.getElementById('expense_name').value.trim();
+    const cost = document.getElementById('cost').value;
+    
+    if (!expenseName) {
+        e.preventDefault();
+        alert('Please enter an expense name.');
+        return;
+    }
+    
+    if (!cost || cost <= 0) {
+        e.preventDefault();
+        alert('Please enter a valid cost amount.');
+        return;
+    }
+    
+    // Confirmation for large expenses
+    if (cost > 1000) {
+        if (!confirm(`Are you sure you want to log an expense of ${cost} EGP? This is a large amount.`)) {
+            e.preventDefault();
+            return;
+        }
+    }
+});
+
+// Auto-focus on expense name when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('expense_name').focus();
+});
+
+// Clear category selection when manually typing
+document.getElementById('expense_name').addEventListener('input', function() {
+    document.querySelectorAll('.expense-category-btn').forEach(btn => {
+        btn.classList.remove('btn-info');
+        btn.classList.add('btn-outline-info');
+    });
+});
+</script>
+{% endblock %}
