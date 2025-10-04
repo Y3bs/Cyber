@@ -12,7 +12,19 @@ from reportlab.lib.units import inch
 
 load_dotenv()
 DB_TOKEN = os.getenv('DB_TOKEN')
-db = MongoClient(DB_TOKEN)
+
+if not DB_TOKEN:
+    raise Exception("DB_TOKEN not found in .env file. Please add your MongoDB connection string.")
+
+try:
+    db = MongoClient(DB_TOKEN)
+    # Test connection
+    db.admin.command('ping')
+    print("✅ Connected to MongoDB successfully!")
+except Exception as e:
+    print(f"❌ MongoDB connection failed: {e}")
+    print("Please check your DB_TOKEN in the .env file")
+    raise e
 
 def load_services():
     try:

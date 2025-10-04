@@ -91,12 +91,203 @@ body {
     background: var(--cyber-highlight);
 }
 
+/* Dropdown Styling - Cyber Theme */
+.dropdown-menu {
+    background: var(--background-secondary) !important;
+    border: var(--border-primary) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--shadow-hover) !important;
+    backdrop-filter: blur(10px);
+    padding: 8px 0;
+    margin-top: 5px;
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+.dropdown-item {
+    color: var(--text-primary) !important;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+    margin: 2px 8px;
+}
+
+.dropdown-item:hover {
+    background: var(--hover-overlay) !important;
+    color: var(--cyber-primary) !important;
+    transform: translateX(5px);
+}
+
+.dropdown-item:active {
+    background: var(--active-overlay) !important;
+    color: var(--cyber-primary) !important;
+}
+
+.dropdown-item:focus {
+    background: var(--hover-overlay) !important;
+    color: var(--cyber-primary) !important;
+    box-shadow: var(--focus-glow);
+}
+
+.dropdown-divider {
+    border-color: var(--border-secondary) !important;
+    margin: 8px 0;
+}
+
+/* Button Dropdown Styling */
+.btn.dropdown-toggle {
+    background: var(--gradient-primary);
+    border: var(--border-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.btn.dropdown-toggle:hover {
+    background: var(--gradient-primary);
+    border-color: var(--cyber-primary);
+    box-shadow: var(--shadow-primary);
+    transform: translateY(-2px);
+}
+
+.btn.dropdown-toggle:focus {
+    box-shadow: var(--focus-glow);
+    border-color: var(--cyber-primary);
+}
+
+.btn.dropdown-toggle:active {
+    background: var(--gradient-primary);
+    border-color: var(--cyber-primary);
+}
+
+/* Dropdown Arrow Styling */
+.dropdown-toggle::after {
+    border-top-color: var(--cyber-primary) !important;
+    border-bottom-color: var(--cyber-primary) !important;
+}
+
+/* Cyber-themed dropdown animations */
+.dropdown-menu.show {
+    animation: cyberDropdownIn 0.3s ease-out;
+}
+
+@keyframes cyberDropdownIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Special styling for edit records dropdown */
+.edit-records-dropdown .dropdown-menu {
+    background: var(--background-tertiary) !important;
+    border: 2px solid var(--cyber-primary) !important;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.3) !important;
+    backdrop-filter: blur(15px);
+    border-radius: 12px !important;
+    padding: 12px 0;
+    margin-top: 8px;
+    z-index: 10000 !important;
+    position: absolute !important;
+}
+
+.edit-records-dropdown .dropdown-item {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    padding: 12px 20px;
+    margin: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.edit-records-dropdown .dropdown-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--cyber-primary), transparent);
+    transition: left 0.5s ease;
+}
+
+.edit-records-dropdown .dropdown-item:hover {
+    background: linear-gradient(90deg, var(--hover-overlay), transparent) !important;
+    color: var(--cyber-primary) !important;
+    text-shadow: 0 0 10px var(--cyber-primary);
+    transform: translateX(8px);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+}
+
+.edit-records-dropdown .dropdown-item:hover::before {
+    left: 100%;
+}
+
+.edit-records-dropdown .dropdown-item i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Navigation dropdown toggle button styling */
+.edit-records-dropdown .nav-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.edit-records-dropdown .nav-link::after {
+    border-top-color: var(--cyber-primary) !important;
+    border-bottom-color: var(--cyber-primary) !important;
+    transition: all 0.3s ease;
+}
+
+.edit-records-dropdown .nav-link:hover::after {
+    border-top-color: var(--text-primary) !important;
+    border-bottom-color: var(--text-primary) !important;
+}
+
+/* Cyber glow effect for active dropdown */
+.edit-records-dropdown.show .nav-link {
+    color: var(--cyber-primary) !important;
+    text-shadow: 0 0 10px var(--cyber-primary);
+}
+
+.edit-records-dropdown.show .dropdown-menu {
+    animation: cyberDropdownGlow 0.3s ease-out;
+}
+
+@keyframes cyberDropdownGlow {
+    0% {
+        box-shadow: 0 0 0 rgba(0, 212, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+}
+
 /* Navigation */
 .navbar {
     background: var(--gradient-secondary) !important;
     border-bottom: var(--border-primary);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-secondary);
+    z-index: 1000;
+    position: relative;
+}
+
+/* Ensure all dropdowns appear in front */
+.navbar .dropdown {
+    position: relative;
+    z-index: 1001;
+}
+
+.navbar .dropdown-menu {
+    z-index: 1002 !important;
 }
 
 .navbar-brand {

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file
 from datetime import datetime, timezone
 import json
 import os
@@ -6,7 +6,8 @@ from utils.database import (
     load_services, save_service, update_service, delete_service, 
     save_logs, db, get_pc_sessions, get_service_logs, get_expense_logs,
     update_pc_session, update_service_log, update_expense_log,
-    delete_pc_session, delete_service_log, delete_expense_log
+    delete_pc_session, delete_service_log, delete_expense_log,
+    save_pc_session, save_service_log, save_expense_log
 )
 from utils.utils import load_data, save_data, calc_totals, cost_to_time
 
@@ -55,11 +56,16 @@ def log_pc():
             flash('Please provide valid PC number and cost', 'error')
             return redirect(url_for('pc_logging'))
         
-        # Log the session
+        # Generate unique session ID
+        import uuid
+        session_id = str(uuid.uuid4())
+        
+        # Log the session to JSON only
         data = load_data()
         today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
         
         session_data = {
+            "session_id": session_id,
             "pc": f"PC {pc_number}",
             "amount": cost,
             "staff": staff,
@@ -274,11 +280,16 @@ def log_service():
         else:
             cost = selected_service['cost']
         
-        # Log the service
+        # Generate unique log ID
+        import uuid
+        log_id = str(uuid.uuid4())
+        
+        # Log the service to JSON only
         data = load_data()
         today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
         
         data["services"].append({
+            "log_id": log_id,
             "service": service_name,
             "amount": cost,
             "staff": staff,
@@ -324,11 +335,16 @@ def log_expense():
             flash('Please provide valid expense name and cost', 'error')
             return redirect(url_for('expenses'))
         
-        # Log the expense
+        # Generate unique log ID
+        import uuid
+        log_id = str(uuid.uuid4())
+        
+        # Log the expense to JSON only
         data = load_data()
         today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
         
         data["expenses"].append({
+            "log_id": log_id,
             "name": expense_name,
             "amount": cost,
             "staff": staff,
@@ -391,12 +407,69 @@ def history():
 def save_logs_route():
     """Save current day logs to database and reset"""
     try:
+        # Get current day data
+        data = load_data()
+        
+        # Move records from JSON to MongoDB
+        for pc_record in data.get('pcs', []):
+            mongo_data = {
+                "session_id": pc_record.get('session_id'),
+                "pc": pc_record.get('pc'),
+                "amount": pc_record.get('amount'),
+                "staff": pc_record.get('staff'),
+                "time": pc_record.get('time'),
+                "notes": pc_record.get('notes'),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "timestamp": datetime.now()
+            }
+            save_pc_session(mongo_data)
+        
+        for service_record in data.get('services', []):
+            mongo_data = {
+                "log_id": service_record.get('log_id'),
+                "service": service_record.get('service'),
+                "amount": service_record.get('amount'),
+                "staff": service_record.get('staff'),
+                "time": service_record.get('time'),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "timestamp": datetime.now()
+            }
+            save_service_log(mongo_data)
+        
+        for expense_record in data.get('expenses', []):
+            mongo_data = {
+                "log_id": expense_record.get('log_id'),
+                "name": expense_record.get('name'),
+                "amount": expense_record.get('amount'),
+                "staff": expense_record.get('staff'),
+                "time": expense_record.get('time'),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "timestamp": datetime.now()
+            }
+            save_expense_log(mongo_data)
+        
+        # Save to logs collection and generate PDF
         save_logs()
-        flash('Daily logs saved and archived successfully!', 'success')
+        
+        flash('Daily logs saved and archived successfully! PDF report generated.', 'success')
     except Exception as e:
         flash(f'Error saving logs: {str(e)}', 'error')
     
     return redirect(url_for('dashboard'))
+
+@app.route('/download-pdf/<date>')
+def download_pdf(date):
+    """Download PDF report for a specific date"""
+    try:
+        filename = f"daily_report_{date}.pdf"
+        if os.path.exists(filename):
+            return send_file(filename, as_attachment=True)
+        else:
+            flash('PDF report not found for this date', 'error')
+            return redirect(url_for('history'))
+    except Exception as e:
+        flash(f'Error downloading PDF: {str(e)}', 'error')
+        return redirect(url_for('history'))
 
 @app.route('/api/summary')
 def api_summary():
@@ -413,6 +486,234 @@ def api_summary():
         'services_count': len(data.get('services', [])),
         'expenses_count': len(data.get('expenses', []))
     })
+
+# ==================== EDIT CURRENT DAY RECORDS ====================
+
+@app.route('/edit-current-pc/<session_id>')
+def edit_current_pc_form(session_id):
+    """Edit current day PC session form"""
+    try:
+        data = load_data()
+        session = None
+        for s in data.get('pcs', []):
+            if s.get('session_id') == session_id:
+                session = s
+                break
+        
+        if not session:
+            flash('PC session not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_pc_session.html', session=session)
+    except Exception as e:
+        flash(f'Error loading PC session: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-current-pc/<session_id>', methods=['POST'])
+def update_current_pc_route(session_id):
+    """Update current day PC session"""
+    try:
+        pc = request.form.get('pc')
+        amount = int(request.form.get('amount'))
+        notes = request.form.get('notes', '')
+        staff = request.form.get('staff', 'Web User')
+        
+        if not pc or amount <= 0:
+            flash('Please provide valid PC number and amount', 'error')
+            return redirect(url_for('edit_current_pc_form', session_id=session_id))
+        
+        # Update in JSON file
+        data = load_data()
+        for i, session in enumerate(data.get('pcs', [])):
+            if session.get('session_id') == session_id:
+                data['pcs'][i].update({
+                    "pc": pc,
+                    "amount": amount,
+                    "notes": notes,
+                    "staff": staff
+                })
+                break
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash(f'PC session updated successfully!', 'success')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating PC session: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/edit-current-service/<log_id>')
+def edit_current_service_form(log_id):
+    """Edit current day service log form"""
+    try:
+        data = load_data()
+        log = None
+        for l in data.get('services', []):
+            if l.get('log_id') == log_id:
+                log = l
+                break
+        
+        if not log:
+            flash('Service log not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_service_log.html', log=log)
+    except Exception as e:
+        flash(f'Error loading service log: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-current-service/<log_id>', methods=['POST'])
+def update_current_service_route(log_id):
+    """Update current day service log"""
+    try:
+        service = request.form.get('service')
+        amount = int(request.form.get('amount'))
+        staff = request.form.get('staff', 'Web User')
+        
+        if not service or amount <= 0:
+            flash('Please provide valid service name and amount', 'error')
+            return redirect(url_for('edit_current_service_form', log_id=log_id))
+        
+        # Update in JSON file
+        data = load_data()
+        for i, log in enumerate(data.get('services', [])):
+            if log.get('log_id') == log_id:
+                data['services'][i].update({
+                    "service": service,
+                    "amount": amount,
+                    "staff": staff
+                })
+                break
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash(f'Service log updated successfully!', 'success')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating service log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/edit-current-expense/<log_id>')
+def edit_current_expense_form(log_id):
+    """Edit current day expense log form"""
+    try:
+        data = load_data()
+        log = None
+        for l in data.get('expenses', []):
+            if l.get('log_id') == log_id:
+                log = l
+                break
+        
+        if not log:
+            flash('Expense log not found', 'error')
+            return redirect(url_for('edit_records'))
+        
+        return render_template('edit_expense_log.html', log=log)
+    except Exception as e:
+        flash(f'Error loading expense log: {str(e)}', 'error')
+        return redirect(url_for('edit_records'))
+
+@app.route('/update-current-expense/<log_id>', methods=['POST'])
+def update_current_expense_route(log_id):
+    """Update current day expense log"""
+    try:
+        name = request.form.get('name')
+        amount = int(request.form.get('amount'))
+        staff = request.form.get('staff', 'Web User')
+        
+        if not name or amount <= 0:
+            flash('Please provide valid expense name and amount', 'error')
+            return redirect(url_for('edit_current_expense_form', log_id=log_id))
+        
+        # Update in JSON file
+        data = load_data()
+        for i, log in enumerate(data.get('expenses', [])):
+            if log.get('log_id') == log_id:
+                data['expenses'][i].update({
+                    "name": name,
+                    "amount": amount,
+                    "staff": staff
+                })
+                break
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash(f'Expense log updated successfully!', 'success')
+        
+    except ValueError:
+        flash('Amount must be a valid number', 'error')
+    except Exception as e:
+        flash(f'Error updating expense log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+# ==================== DELETE CURRENT DAY RECORDS ====================
+
+@app.route('/delete-current-pc/<session_id>')
+def delete_current_pc_route(session_id):
+    """Delete current day PC session"""
+    try:
+        data = load_data()
+        data['pcs'] = [s for s in data.get('pcs', []) if s.get('session_id') != session_id]
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash('PC session deleted successfully!', 'success')
+        
+    except Exception as e:
+        flash(f'Error deleting PC session: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/delete-current-service/<log_id>')
+def delete_current_service_route(log_id):
+    """Delete current day service log"""
+    try:
+        data = load_data()
+        data['services'] = [s for s in data.get('services', []) if s.get('log_id') != log_id]
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash('Service log deleted successfully!', 'success')
+        
+    except Exception as e:
+        flash(f'Error deleting service log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
+
+@app.route('/delete-current-expense/<log_id>')
+def delete_current_expense_route(log_id):
+    """Delete current day expense log"""
+    try:
+        data = load_data()
+        data['expenses'] = [e for e in data.get('expenses', []) if e.get('log_id') != log_id]
+        
+        # Recalculate totals
+        data['totals']['pcs'], data['totals']['services'], data['totals']['expenses'], data['totals']['all'] = calc_totals(data)
+        save_data(data)
+        
+        flash('Expense log deleted successfully!', 'success')
+        
+    except Exception as e:
+        flash(f'Error deleting expense log: {str(e)}', 'error')
+    
+    return redirect(url_for('edit_records'))
 
 # ==================== EDIT FUNCTIONALITY ====================
 
@@ -465,7 +766,10 @@ def edit_records():
                          pc_total=pc_total,
                          service_total=service_total,
                          expense_total=expense_total,
-                         net_total=net_total)
+                         net_total=net_total,
+                         current_pcs=current_pcs,
+                         current_services=current_services,
+                         current_expenses=current_expenses)
 
 @app.route('/edit-pc-session/<session_id>')
 def edit_pc_session_form(session_id):

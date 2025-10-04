@@ -305,14 +305,26 @@
                                 {% endif %}
                             </div>
                             <div class="btn-group w-100 mt-3">
-                                <a href="/edit-pc-session/{{ record.get('session_id') }}" class="btn btn-sm btn-outline-primary btn-action">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a href="/delete-pc-session/{{ record.get('session_id') }}" 
-                                   class="btn btn-sm btn-outline-danger btn-action"
-                                   onclick="return confirm('Are you sure you want to delete this PC session?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
+                                {% set current_pc_ids = current_pcs|map(attribute='session_id')|list %}
+                                {% if record.get('session_id') in current_pc_ids %}
+                                    <a href="/edit-current-pc/{{ record.get('session_id') }}" class="btn btn-sm btn-outline-primary btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-current-pc/{{ record.get('session_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this PC session?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% else %}
+                                    <a href="/edit-pc-session/{{ record.get('session_id') }}" class="btn btn-sm btn-outline-primary btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-pc-session/{{ record.get('session_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this PC session?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -354,14 +366,26 @@
                                 {% endif %}
                             </div>
                             <div class="btn-group w-100 mt-3">
-                                <a href="/edit-service-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-success btn-action">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a href="/delete-service-log/{{ record.get('log_id') }}" 
-                                   class="btn btn-sm btn-outline-danger btn-action"
-                                   onclick="return confirm('Are you sure you want to delete this service log?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
+                                {% set current_service_ids = current_services|map(attribute='log_id')|list %}
+                                {% if record.get('log_id') in current_service_ids %}
+                                    <a href="/edit-current-service/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-success btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-current-service/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this service log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% else %}
+                                    <a href="/edit-service-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-success btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-service-log/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this service log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -400,14 +424,26 @@
                                 <strong>Time:</strong> {{ record.get('time', 'Unknown') }}<br>
                             </div>
                             <div class="btn-group w-100 mt-3">
-                                <a href="/edit-expense-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-warning btn-action">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <a href="/delete-expense-log/{{ record.get('log_id') }}" 
-                                   class="btn btn-sm btn-outline-danger btn-action"
-                                   onclick="return confirm('Are you sure you want to delete this expense log?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
+                                {% set current_expense_ids = current_expenses|map(attribute='log_id')|list %}
+                                {% if record.get('log_id') in current_expense_ids %}
+                                    <a href="/edit-current-expense/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-warning btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-current-expense/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this expense log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% else %}
+                                    <a href="/edit-expense-log/{{ record.get('log_id') }}" class="btn btn-sm btn-outline-warning btn-action">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/delete-expense-log/{{ record.get('log_id') }}" 
+                                       class="btn btn-sm btn-outline-danger btn-action"
+                                       onclick="return confirm('Are you sure you want to delete this expense log?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

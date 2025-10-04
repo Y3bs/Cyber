@@ -1,31 +1,34 @@
 {
     "pcs": [
         {
-            "pc": "PC 14",
-            "amount": 50,
+            "session_id": "0e67505b-f8bd-43e6-bad0-0093f90c023d",
+            "pc": "PC 12",
+            "amount": 10,
             "staff": "Yousef",
-            "time": "02 Oct 2025 06:03 PM"
+            "time": "04 Oct 2025 09:31 AM"
         },
         {
-            "pc": "PC 1",
-            "amount": 15,
-            "staff": "Web User",
-            "time": "03 Oct 2025 01:24 AM"
+            "session_id": "ee382449-a2aa-4709-af6f-acfbfc61ef63",
+            "pc": "PC 13",
+            "amount": 10,
+            "staff": "Yousef",
+            "time": "04 Oct 2025 09:31 AM"
         },
         {
-            "pc": "PC 3",
-            "amount": 40,
-            "staff": "Web User",
-            "time": "03 Oct 2025 01:31 AM"
+            "session_id": "81506db8-987b-418d-b6be-8b2db8081051",
+            "pc": "PC 11",
+            "amount": 10,
+            "staff": "Yousef",
+            "time": "04 Oct 2025 09:31 AM"
         }
     ],
     "services": [],
     "expenses": [],
     "totals": {
-        "pcs": 105,
+        "pcs": 30,
         "services": 0,
         "expenses": 0,
-        "all": 105
+        "all": 30
     },
     "log_channel_id": 1423056591279882260
 }
