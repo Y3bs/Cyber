@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file, session
 from datetime import datetime, timezone
 import json
 import os
@@ -7,14 +7,205 @@ from utils.database import (
     save_logs, db, get_pc_sessions, get_service_logs, get_expense_logs,
     update_pc_session, update_service_log, update_expense_log,
     delete_pc_session, delete_service_log, delete_expense_log,
-    save_pc_session, save_service_log, save_expense_log
+    save_pc_session, save_service_log, save_expense_log,
+    create_user, verify_user_credentials, get_user_by_username,
+    users_count, set_user_role, update_user_password, update_user_fields, rename_user, delete_user, reset_all_users
 )
-from utils.utils import load_data, save_data, calc_totals, cost_to_time
+from utils.utils import load_data, save_data, calc_totals, cost_to_time, get_current_period
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change this in production
 
+# ==================== AUTH HELPERS ====================
+def login_required(view_func):
+    def wrapper(*args, **kwargs):
+        if not session.get('user'):
+            flash('Please login to continue', 'error')
+            return redirect(url_for('login', next=request.path))
+        return view_func(*args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+def admin_required(view_func):
+    def wrapper(*args, **kwargs):
+        user = session.get('user')
+        if not user or user.get('role') not in ['admin', 'owner']:
+            flash('Admin access required', 'error')
+            return redirect(url_for('dashboard'))
+        return view_func(*args, **kwargs)
+    wrapper.__name__ = view_func.__name__
+    return wrapper
+
+@app.context_processor
+def inject_user():
+    # Signup is disabled by requirement
+    return {"current_user": session.get('user'), "can_signup": False}
+
+# ==================== AUTH ROUTES ====================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        if verify_user_credentials(username, password):
+            user_doc = get_user_by_username(username) or {"username": username, "role": "user"}
+            # If there is exactly one user in the system and no owner exists, assign this user as owner
+            try:
+                no_owner_exists = db.cyber.users.count_documents({"role": "owner"}) == 0
+            except Exception:
+                no_owner_exists = True
+            if users_count() == 1 and no_owner_exists and user_doc.get('role') != 'owner':
+                set_user_role(username, 'owner')
+                user_doc['role'] = 'owner'
+            session['user'] = {"username": user_doc.get('username'), "role": user_doc.get('role', 'user')}
+            flash('Logged in successfully', 'success')
+            next_url = request.args.get('next') or url_for('dashboard')
+            return redirect(next_url)
+        else:
+            flash('Invalid username or password', 'error')
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    flash('Sign up is disabled. Please ask the owner/admin to create your account.', 'error')
+    return redirect(url_for('login'))
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    flash('Logged out', 'success')
+    return redirect(url_for('login'))
+
+# ==================== ACCOUNT (SELF-SERVICE) ====================
+@app.route('/account', methods=['GET', 'POST'])
+@login_required
+def account():
+    user = session.get('user') or {}
+    if request.method == 'POST':
+        current = request.form.get('current_password', '')
+        new = request.form.get('new_password', '')
+        confirm = request.form.get('confirm_password', '')
+        if not new or new != confirm:
+            flash('Passwords do not match', 'error')
+        else:
+            # Verify current password
+            if not verify_user_credentials(user.get('username'), current):
+                flash('Current password is incorrect', 'error')
+            else:
+                if update_user_password(user.get('username'), new):
+                    flash('Password updated successfully', 'success')
+                else:
+                    flash('Failed to update password', 'error')
+    return render_template('account.html')
+
+# ==================== ADMIN: USER MANAGEMENT ====================
+@app.route('/admin/users', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_users():
+    if request.method == 'POST':
+        action = request.form.get('action', 'create')
+        if action == 'create':
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
+            role = request.form.get('role', 'worker')
+            if not username or not password:
+                flash('Username and password are required', 'error')
+            else:
+                ok, err = create_user(username, password)
+                if ok:
+                    if role in ['admin','owner','worker']:
+                        # Allow owner to assign any role; admin can assign worker/admin only
+                        current = session.get('user') or {}
+                        current_role = current.get('role')
+                        if current_role == 'owner':
+                            set_user_role(username, role)
+                        elif current_role == 'admin' and role in ['worker','admin']:
+                            set_user_role(username, role)
+                        else:
+                            flash('Insufficient privileges to assign this role', 'error')
+                    flash('User created successfully', 'success')
+                else:
+                    flash(err or 'Failed to create user', 'error')
+        elif action == 'update':
+            username = request.form.get('edit_username', '').strip()
+            role = request.form.get('edit_role')
+            new_password = request.form.get('edit_password', '').strip() or None
+            # Owner can set any role; admin cannot set role to owner
+            if role == 'owner' and (session.get('user') or {}).get('role') != 'owner':
+                flash('Only owner can assign owner role', 'error')
+                updated = update_user_fields(username, role=None, new_password=new_password)
+            else:
+                updated = update_user_fields(username, role=role, new_password=new_password)
+            if updated:
+                flash('User updated successfully', 'success')
+            else:
+                flash('No changes applied or update failed', 'error')
+        elif action == 'rename':
+            old_username = request.form.get('old_username', '').strip()
+            new_username = request.form.get('new_username', '').strip()
+            ok, err = rename_user(old_username, new_username)
+            flash('Username updated' if ok else (err or 'Rename failed'), 'success' if ok else 'error')
+        elif action == 'delete':
+            username = request.form.get('delete_username', '').strip()
+            ok = delete_user(username)
+            flash('User deleted' if ok else 'Delete failed', 'success' if ok else 'error')
+        elif action == 'reset':
+            # Reset all users; after this, the very next successful login assigns owner automatically
+            ok = reset_all_users()
+            session.pop('user', None)
+            flash('All users have been reset' if ok else 'Failed to reset users', 'success' if ok else 'error')
+    # List users
+    users = list(db.cyber.users.find({}, {"_id": 0, "password_hash": 0}).sort("username", 1))
+    return render_template('admin_users.html', users=users)
+
+# ==================== ADMIN: USER DETAILS (WORKERS) ====================
+@app.route('/admin/user/<username>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_user_detail(username):
+    target = get_user_by_username(username)
+    if not target:
+        flash('User not found', 'error')
+        return redirect(url_for('admin_users'))
+
+    # Only allow full edit/delete for workers; owner can edit admins as well if needed
+    current = session.get('user') or {}
+    is_owner = current.get('role') == 'owner'
+    if target.get('role') != 'worker' and not is_owner:
+        flash('Only worker accounts can be edited here', 'error')
+        return redirect(url_for('admin_users'))
+
+    if request.method == 'POST':
+        action = request.form.get('action', 'update')
+        if action == 'update':
+            new_role = request.form.get('role')
+            new_password = request.form.get('password', '').strip() or None
+            ok = update_user_fields(username, role=new_role, new_password=new_password)
+            flash('User updated' if ok else 'No changes applied', 'success' if ok else 'error')
+        elif action == 'rename':
+            new_username = request.form.get('new_username', '').strip()
+            ok, err = rename_user(username, new_username)
+            if ok:
+                flash('Username updated', 'success')
+                return redirect(url_for('admin_user_detail', username=new_username))
+            else:
+                flash(err or 'Rename failed', 'error')
+        elif action == 'delete':
+            ok = delete_user(username)
+            if ok:
+                flash('User deleted', 'success')
+                return redirect(url_for('admin_users'))
+            else:
+                flash('Delete failed', 'error')
+
+        # refresh target after any action
+        target = get_user_by_username(username)
+
+    return render_template('admin_user_detail.html', user=target, is_owner=is_owner)
+
 @app.route('/')
+@login_required
 def dashboard():
     """Main dashboard showing summary and quick actions"""
     data = load_data()
@@ -24,9 +215,16 @@ def dashboard():
     pcs_total, services_total, expenses_total, total_all = calc_totals(data)
     
     # Recent activities (last 5 of each type)
-    recent_pcs = data.get('pcs', [])[-5:]
-    recent_services = data.get('services', [])[-5:]
-    recent_expenses = data.get('expenses', [])[-5:]
+    user = session.get('user') or {}
+    if user.get('role') == 'admin':
+        recent_pcs = data.get('pcs', [])[-5:]
+        recent_services = data.get('services', [])[-5:]
+        recent_expenses = data.get('expenses', [])[-5:]
+    else:
+        username = user.get('username')
+        recent_pcs = [r for r in data.get('pcs', []) if r.get('staff') == username][-5:]
+        recent_services = [r for r in data.get('services', []) if r.get('staff') == username][-5:]
+        recent_expenses = [r for r in data.get('expenses', []) if r.get('staff') == username][-5:]
     
     return render_template('dashboard.html', 
                          pcs_total=pcs_total,
@@ -39,18 +237,20 @@ def dashboard():
                          services_count=len(services))
 
 @app.route('/pc-logging')
+@login_required
 def pc_logging():
     """PC session logging page"""
     return render_template('pc_logging.html')
 
 @app.route('/log-pc', methods=['POST'])
+@login_required
 def log_pc():
     """Handle PC session logging"""
     try:
         pc_number = request.form.get('pc_number')
         cost = int(request.form.get('cost'))
         notes = request.form.get('notes', '')
-        staff = request.form.get('staff', 'Web User')
+        staff = (session.get('user') or {}).get('username', 'Web User')
         
         if not pc_number or cost <= 0:
             flash('Please provide valid PC number and cost', 'error')
@@ -69,7 +269,8 @@ def log_pc():
             "pc": f"PC {pc_number}",
             "amount": cost,
             "staff": staff,
-            "time": today_full
+            "time": today_full,
+            "period": get_current_period()
         }
         
         if notes:
@@ -99,12 +300,14 @@ def log_pc():
     return redirect(url_for('pc_logging'))
 
 @app.route('/services')
+@login_required
 def services():
     """Services management page"""
     services_list = load_services()
     return render_template('services.html', services=services_list)
 
 @app.route('/add-service', methods=['POST'])
+@login_required
 def add_service():
     """Add a new service"""
     try:
@@ -144,6 +347,7 @@ def add_service():
     return redirect(url_for('services'))
 
 @app.route('/edit-service/<service_name>')
+@login_required
 def edit_service_form(service_name):
     """Show edit form for a specific service"""
     try:
@@ -164,6 +368,7 @@ def edit_service_form(service_name):
         return redirect(url_for('services'))
 
 @app.route('/update-service/<service_name>', methods=['POST'])
+@login_required
 def update_service_route(service_name):
     """Update service availability or details"""
     try:
@@ -244,6 +449,7 @@ def update_service_route(service_name):
     return redirect(url_for('services'))
 
 @app.route('/service-logging')
+@login_required
 def service_logging():
     """Service logging page"""
     services_list = load_services()
@@ -251,11 +457,12 @@ def service_logging():
     return render_template('service_logging.html', services=available_services)
 
 @app.route('/log-service', methods=['POST'])
+@login_required
 def log_service():
     """Handle service logging"""
     try:
         service_name = request.form.get('service_name')
-        staff = request.form.get('staff', 'Web User')
+        staff = (session.get('user') or {}).get('username', 'Web User')
         custom_cost = request.form.get('custom_cost')
         
         if not service_name:
@@ -293,7 +500,8 @@ def log_service():
             "service": service_name,
             "amount": cost,
             "staff": staff,
-            "time": today_full
+            "time": today_full,
+            "period": get_current_period()
         })
         
         # Update totals
@@ -317,19 +525,25 @@ def log_service():
     return redirect(url_for('service_logging'))
 
 @app.route('/expenses')
+@login_required
 def expenses():
     """Expenses logging page"""
     data = load_data()
     expenses_list = data.get('expenses', [])
+    user = session.get('user') or {}
+    if user.get('role') != 'admin':
+        username = user.get('username')
+        expenses_list = [e for e in expenses_list if e.get('staff') == username]
     return render_template('expenses.html', expenses=expenses_list)
 
 @app.route('/log-expense', methods=['POST'])
+@login_required
 def log_expense():
     """Handle expense logging"""
     try:
         expense_name = request.form.get('expense_name')
         cost = int(request.form.get('cost'))
-        staff = request.form.get('staff', 'Web User')
+        staff = (session.get('user') or {}).get('username', 'Web User')
         
         if not expense_name or cost <= 0:
             flash('Please provide valid expense name and cost', 'error')
@@ -348,7 +562,8 @@ def log_expense():
             "name": expense_name,
             "amount": cost,
             "staff": staff,
-            "time": today_full
+            "time": today_full,
+            "period": get_current_period()
         })
         
         # Update totals
@@ -372,6 +587,7 @@ def log_expense():
     return redirect(url_for('expenses'))
 
 @app.route('/history')
+@login_required
 def history():
     """View historical logs from database"""
     try:
@@ -404,6 +620,7 @@ def history():
         return render_template('history.html', logs=[])
 
 @app.route('/save-logs', methods=['POST'])
+@login_required
 def save_logs_route():
     """Save current day logs to database and reset"""
     try:
@@ -458,6 +675,7 @@ def save_logs_route():
     return redirect(url_for('dashboard'))
 
 @app.route('/download-pdf/<date>')
+@login_required
 def download_pdf(date):
     """Download PDF report for a specific date"""
     try:
@@ -472,6 +690,7 @@ def download_pdf(date):
         return redirect(url_for('history'))
 
 @app.route('/api/summary')
+@login_required
 def api_summary():
     """API endpoint for summary data (for dynamic updates)"""
     data = load_data()
@@ -490,6 +709,7 @@ def api_summary():
 # ==================== EDIT CURRENT DAY RECORDS ====================
 
 @app.route('/edit-current-pc/<session_id>')
+@login_required
 def edit_current_pc_form(session_id):
     """Edit current day PC session form"""
     try:
@@ -510,6 +730,7 @@ def edit_current_pc_form(session_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-current-pc/<session_id>', methods=['POST'])
+@login_required
 def update_current_pc_route(session_id):
     """Update current day PC session"""
     try:
@@ -548,6 +769,7 @@ def update_current_pc_route(session_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/edit-current-service/<log_id>')
+@login_required
 def edit_current_service_form(log_id):
     """Edit current day service log form"""
     try:
@@ -568,6 +790,7 @@ def edit_current_service_form(log_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-current-service/<log_id>', methods=['POST'])
+@login_required
 def update_current_service_route(log_id):
     """Update current day service log"""
     try:
@@ -604,6 +827,7 @@ def update_current_service_route(log_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/edit-current-expense/<log_id>')
+@login_required
 def edit_current_expense_form(log_id):
     """Edit current day expense log form"""
     try:
@@ -624,6 +848,7 @@ def edit_current_expense_form(log_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-current-expense/<log_id>', methods=['POST'])
+@login_required
 def update_current_expense_route(log_id):
     """Update current day expense log"""
     try:
@@ -662,6 +887,7 @@ def update_current_expense_route(log_id):
 # ==================== DELETE CURRENT DAY RECORDS ====================
 
 @app.route('/delete-current-pc/<session_id>')
+@login_required
 def delete_current_pc_route(session_id):
     """Delete current day PC session"""
     try:
@@ -680,6 +906,7 @@ def delete_current_pc_route(session_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/delete-current-service/<log_id>')
+@login_required
 def delete_current_service_route(log_id):
     """Delete current day service log"""
     try:
@@ -698,6 +925,7 @@ def delete_current_service_route(log_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/delete-current-expense/<log_id>')
+@login_required
 def delete_current_expense_route(log_id):
     """Delete current day expense log"""
     try:
@@ -718,42 +946,22 @@ def delete_current_expense_route(log_id):
 # ==================== EDIT FUNCTIONALITY ====================
 
 @app.route('/edit-records')
+@login_required
 def edit_records():
-    """Main edit records page"""
-    # Get current day data from JSON file (for today's records)
+    """Main edit records page - ONLY today's records from current_day.json"""
     data = load_data()
-    current_pcs = data.get('pcs', [])
-    current_services = data.get('services', [])
-    current_expenses = data.get('expenses', [])
+    pc_records = data.get('pcs', [])
+    service_records = data.get('services', [])
+    expense_records = data.get('expenses', [])
     
-    # Get all records from MongoDB (for historical records)
-    mongo_pc_records = get_pc_sessions()
-    mongo_service_records = get_service_logs()
-    mongo_expense_records = get_expense_logs()
+    # Restrict visibility for non-admin users
+    user = session.get('user') or {}
+    if user.get('role') != 'admin':
+        username = user.get('username')
+        pc_records = [r for r in pc_records if r.get('staff') == username]
+        service_records = [r for r in service_records if r.get('staff') == username]
+        expense_records = [r for r in expense_records if r.get('staff') == username]
     
-    # Combine current day records with MongoDB records, avoiding duplicates
-    pc_records = current_pcs.copy()
-    service_records = current_services.copy()
-    expense_records = current_expenses.copy()
-    
-    # Add MongoDB records that aren't already in current day
-    current_pc_ids = {record.get('session_id') for record in current_pcs if record.get('session_id')}
-    current_service_ids = {record.get('log_id') for record in current_services if record.get('log_id')}
-    current_expense_ids = {record.get('log_id') for record in current_expenses if record.get('log_id')}
-    
-    for record in mongo_pc_records:
-        if record.get('session_id') not in current_pc_ids:
-            pc_records.append(record)
-    
-    for record in mongo_service_records:
-        if record.get('log_id') not in current_service_ids:
-            service_records.append(record)
-    
-    for record in mongo_expense_records:
-        if record.get('log_id') not in current_expense_ids:
-            expense_records.append(record)
-    
-    # Calculate totals
     pc_total = sum(record.get('amount', 0) for record in pc_records)
     service_total = sum(record.get('amount', 0) for record in service_records)
     expense_total = sum(record.get('amount', 0) for record in expense_records)
@@ -767,11 +975,12 @@ def edit_records():
                          service_total=service_total,
                          expense_total=expense_total,
                          net_total=net_total,
-                         current_pcs=current_pcs,
-                         current_services=current_services,
-                         current_expenses=current_expenses)
+                         current_pcs=pc_records,
+                         current_services=service_records,
+                         current_expenses=expense_records)
 
 @app.route('/edit-pc-session/<session_id>')
+@login_required
 def edit_pc_session_form(session_id):
     """Edit PC session form"""
     try:
@@ -793,13 +1002,14 @@ def edit_pc_session_form(session_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-pc-session/<session_id>', methods=['POST'])
+@login_required
 def update_pc_session_route(session_id):
     """Update PC session"""
     try:
         pc = request.form.get('pc')
         amount = int(request.form.get('amount'))
         notes = request.form.get('notes', '')
-        staff = request.form.get('staff', 'Web User')
+        staff = request.form.get('staff') or (session.get('user') or {}).get('username', 'Web User')
         
         if not pc or amount <= 0:
             flash('Please provide valid PC number and amount', 'error')
@@ -838,6 +1048,7 @@ def update_pc_session_route(session_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/edit-service-log/<log_id>')
+@login_required
 def edit_service_log_form(log_id):
     """Edit service log form"""
     try:
@@ -859,12 +1070,13 @@ def edit_service_log_form(log_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-service-log/<log_id>', methods=['POST'])
+@login_required
 def update_service_log_route(log_id):
     """Update service log"""
     try:
         service = request.form.get('service')
         amount = int(request.form.get('amount'))
-        staff = request.form.get('staff', 'Web User')
+        staff = request.form.get('staff') or (session.get('user') or {}).get('username', 'Web User')
         
         if not service or amount <= 0:
             flash('Please provide valid service name and amount', 'error')
@@ -902,6 +1114,7 @@ def update_service_log_route(log_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/edit-expense-log/<log_id>')
+@login_required
 def edit_expense_log_form(log_id):
     """Edit expense log form"""
     try:
@@ -923,12 +1136,13 @@ def edit_expense_log_form(log_id):
         return redirect(url_for('edit_records'))
 
 @app.route('/update-expense-log/<log_id>', methods=['POST'])
+@login_required
 def update_expense_log_route(log_id):
     """Update expense log"""
     try:
         name = request.form.get('name')
         amount = int(request.form.get('amount'))
-        staff = request.form.get('staff', 'Web User')
+        staff = request.form.get('staff') or (session.get('user') or {}).get('username', 'Web User')
         
         if not name or amount <= 0:
             flash('Please provide valid expense name and amount', 'error')
@@ -968,6 +1182,7 @@ def update_expense_log_route(log_id):
 # ==================== DELETE FUNCTIONALITY ====================
 
 @app.route('/delete-pc-session/<session_id>')
+@login_required
 def delete_pc_session_route(session_id):
     """Delete PC session"""
     try:
@@ -992,6 +1207,7 @@ def delete_pc_session_route(session_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/delete-service-log/<log_id>')
+@login_required
 def delete_service_log_route(log_id):
     """Delete service log"""
     try:
@@ -1016,6 +1232,7 @@ def delete_service_log_route(log_id):
     return redirect(url_for('edit_records'))
 
 @app.route('/delete-expense-log/<log_id>')
+@login_required
 def delete_expense_log_route(log_id):
     """Delete expense log"""
     try:
@@ -1042,6 +1259,7 @@ def delete_expense_log_route(log_id):
 # ==================== SEARCH FUNCTIONALITY ====================
 
 @app.route('/search-records')
+@login_required
 def search_records():
     """Search records page"""
     query = request.args.get('q', '')
@@ -1080,6 +1298,14 @@ def search_records():
         for record in mongo_expense_records:
             if record.get('log_id') not in current_expense_ids:
                 expense_records.append(record)
+        
+        # Restrict visibility for non-admin users
+        user = session.get('user') or {}
+        if user.get('role') != 'admin':
+            username = user.get('username')
+            pc_records = [r for r in pc_records if r.get('staff') == username]
+            service_records = [r for r in service_records if r.get('staff') == username]
+            expense_records = [r for r in expense_records if r.get('staff') == username]
         
         search_lower = query.lower()
         

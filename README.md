@@ -54,6 +54,18 @@ python main.py
 
 ```bash
 python app.py
+## Authentication (Web UI)
+
+The web dashboard requires authentication for all management pages.
+
+- Sign up: `/signup`
+- Login: `/login`
+- Logout: `/logout`
+
+Users are stored in MongoDB collection `cyber.users` with salted password hashes. Set a strong `app.secret_key` in `app.py` for production.
+
+<!-- Windows exe packaging removed by request. Use `python app.py` to run the web app. -->
+
 ```
 
 ## Discord Commands

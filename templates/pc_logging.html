@@ -43,13 +43,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="staff" class="form-label">
-                                <i class="fas fa-user"></i> Staff Member
-                            </label>
-                            <input type="text" class="form-control" id="staff" name="staff" 
-                                   placeholder="Enter staff name" value="Web User">
-                        </div>
+                        
 
                         <div class="col-md-6 mb-3">
                             <label for="notes" class="form-label">
@@ -150,6 +144,8 @@ function selectPC(pcNumber) {
     // Focus on cost input
     document.getElementById('cost').focus();
 }
+
+// staff selection removed; staff is tied to logged-in user
 
 function calculateTime() {
     const cost = parseInt(document.getElementById('calc_cost').value);

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Leader - Manage {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow border-info mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-info d-flex align-items-center gap-2">
+                    <i class="fas fa-user-cog"></i> Manage User: {{ user.username }}
+                </h6>
+                <span class="badge bg-{{ 'primary' if user.role == 'admin' else ('secondary' if user.role == 'worker' else 'info') }}">{{ user.role|capitalize }}</span>
+            </div>
+            <div class="card-body">
+                <form method="post" class="mb-4">
+                    <input type="hidden" name="action" value="update">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" name="role" {% if user.username == '-O_O' and not is_owner %}disabled{% endif %}>
+                                <option value="worker" {% if user.role == 'worker' %}selected{% endif %}>Worker</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                <option value="owner" {% if user.role == 'owner' %}selected{% endif %}>Owner</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="Leave blank to keep">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-info w-100">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+
+                <form method="post" class="mb-4 d-flex gap-2 align-items-end">
+                    <input type="hidden" name="action" value="rename">
+                    <div class="flex-grow-1">
+                        <label class="form-label">Change Username</label>
+                        <input type="text" class="form-control" name="new_username" placeholder="New username">
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Rename</button>
+                </form>
+
+                {% if user.username != '-O_O' %}
+                <form method="post" onsubmit="return confirm('Delete user {{ user.username }}? This cannot be undone.');">
+                    <input type="hidden" name="action" value="delete">
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Delete User</button>
+                </form>
+                {% else %}
+                <div class="alert alert-info mt-3"><i class="fas fa-info-circle"></i> The Owner account cannot be deleted.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

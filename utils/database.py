@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 import os
 from dotenv import load_dotenv
 from pprint import pprint
@@ -9,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 DB_TOKEN = os.getenv('DB_TOKEN')
@@ -21,6 +23,10 @@ try:
     # Test connection
     db.admin.command('ping')
     print("✅ Connected to MongoDB successfully!")
+    try:
+        db.cyber.users.create_index("username", unique=True)
+    except Exception:
+        pass
 except Exception as e:
     print(f"❌ MongoDB connection failed: {e}")
     print("Please check your DB_TOKEN in the .env file")
@@ -109,9 +115,10 @@ def update_pc_session(session_id, update_data):
     try:
         result = db.cyber.pc_sessions.update_one(
             {"session_id": session_id}, 
-            {"$set": update_data}
+            {"$set": update_data},
+            upsert=True
         )
-        return result.modified_count > 0
+        return (result.modified_count > 0) or (result.matched_count > 0) or (getattr(result, 'upserted_id', None) is not None)
     except Exception as e:
         print(f"Error updating PC session: {e}")
         return False
@@ -145,9 +152,10 @@ def update_service_log(log_id, update_data):
     try:
         result = db.cyber.service_logs.update_one(
             {"log_id": log_id}, 
-            {"$set": update_data}
+            {"$set": update_data},
+            upsert=True
         )
-        return result.modified_count > 0
+        return (result.modified_count > 0) or (result.matched_count > 0) or (getattr(result, 'upserted_id', None) is not None)
     except Exception as e:
         print(f"Error updating service log: {e}")
         return False
@@ -181,9 +189,10 @@ def update_expense_log(log_id, update_data):
     try:
         result = db.cyber.expense_logs.update_one(
             {"log_id": log_id}, 
-            {"$set": update_data}
+            {"$set": update_data},
+            upsert=True
         )
-        return result.modified_count > 0
+        return (result.modified_count > 0) or (result.matched_count > 0) or (getattr(result, 'upserted_id', None) is not None)
     except Exception as e:
         print(f"Error updating expense log: {e}")
         return False
@@ -194,6 +203,118 @@ def delete_expense_log(log_id):
         return result.deleted_count > 0
     except Exception as e:
         print(f"Error deleting expense log: {e}")
+        return False
+
+# ==================== USER AUTH HELPERS ====================
+def create_user(username: str, password: str):
+    try:
+        if not username or not password:
+            return False, "Username and password are required"
+        password_hash = generate_password_hash(password)
+        user_doc = {
+            "username": username,
+            "password_hash": password_hash,
+            "created_at": datetime.now(),
+            "role": "worker",
+        }
+        db.cyber.users.insert_one(user_doc)
+        return True, None
+    except DuplicateKeyError:
+        return False, "Username already exists"
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        return False, "Internal error"
+
+def get_user_by_username(username: str):
+    try:
+        return db.cyber.users.find_one({"username": username}, {"_id": 0})
+    except Exception as e:
+        print(f"Error fetching user: {e}")
+        return None
+
+def verify_user_credentials(username: str, password: str):
+    try:
+        user = db.cyber.users.find_one({"username": username})
+        if not user:
+            return False
+        return check_password_hash(user.get("password_hash", ""), password)
+    except Exception as e:
+        print(f"Error verifying credentials: {e}")
+        return False
+
+def users_count():
+    try:
+        return db.cyber.users.estimated_document_count()
+    except Exception:
+        return 0
+
+def reset_all_users():
+    try:
+        # Drop users collection entirely
+        db.cyber.users.drop()
+        # Recreate unique index on username
+        try:
+            db.cyber.users.create_index("username", unique=True)
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        print(f"Error resetting users: {e}")
+        return False
+
+def set_user_role(username: str, role: str):
+    try:
+        result = db.cyber.users.update_one({"username": username}, {"$set": {"role": role}})
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Error setting user role: {e}")
+        return False
+
+def update_user_password(username: str, new_password: str):
+    try:
+        if not new_password:
+            return False
+        password_hash = generate_password_hash(new_password)
+        result = db.cyber.users.update_one({"username": username}, {"$set": {"password_hash": password_hash}})
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Error updating user password: {e}")
+        return False
+
+def update_user_fields(username: str, role: str | None = None, new_password: str | None = None):
+    try:
+        update_doc = {}
+        if role:
+            update_doc["role"] = role
+        if new_password:
+            update_doc["password_hash"] = generate_password_hash(new_password)
+        if not update_doc:
+            return False
+        result = db.cyber.users.update_one({"username": username}, {"$set": update_doc})
+        return result.modified_count > 0
+    except Exception as e:
+        print(f"Error updating user fields: {e}")
+        return False
+
+def rename_user(old_username: str, new_username: str):
+    try:
+        if not new_username:
+            return False, "New username required"
+        # Ensure unique
+        if db.cyber.users.find_one({"username": new_username}):
+            return False, "Username already exists"
+        result = db.cyber.users.update_one({"username": old_username}, {"$set": {"username": new_username}})
+        return result.modified_count > 0, None
+    except Exception as e:
+        print(f"Error renaming user: {e}")
+        return False, "Internal error"
+
+def delete_user(username: str):
+    try:
+        result = db.cyber.users.delete_one({"username": username})
+        return result.deleted_count > 0
+    except Exception as e:
+        print(f"Error deleting user: {e}")
         return False
 
 # PDF Report Generation

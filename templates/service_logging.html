@@ -36,13 +36,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4 mb-3">
-                                <label for="staff" class="form-label">
-                                    <i class="fas fa-user"></i> Staff Member
-                                </label>
-                                <input type="text" class="form-control" id="staff" name="staff" 
-                                       placeholder="Enter staff name" value="Web User">
-                            </div>
+                            
                         </div>
 
                         <!-- Custom Cost Input (hidden by default) -->
@@ -181,6 +175,8 @@
 
 {% block extra_js %}
 <script>
+// staff selection removed; staff is tied to logged-in user
+
 function updateServiceDetails() {
     const select = document.getElementById('service_name');
     const option = select.options[select.selectedIndex];
@@ -233,8 +229,6 @@ function selectService(serviceName) {
     const customCostRow = document.getElementById('customCostRow');
     if (customCostRow.style.display !== 'none') {
         document.getElementById('custom_cost').focus();
-    } else {
-        document.getElementById('staff').focus();
     }
 }
 

@@ -2,62 +2,62 @@
 
 /* Cyber Cafe Color Theme */
 :root {
-    /* Primary Cyber Theme Colors */
-    --cyber-primary: #00d4ff;        /* Electric Blue - Main brand color */
-    --cyber-secondary: #1a1a2e;      /* Dark Navy - Secondary backgrounds */
-    --cyber-accent: #16213e;         /* Deep Blue - Accent elements */
-    --cyber-highlight: #0f3460;      /* Medium Blue - Highlights */
-    
-    /* Gaming/PC Colors */
-    --pc-color: #00ff88;             /* Neon Green - PC related */
-    --pc-hover: #00cc6a;             /* Darker Green - PC hover */
-    --service-color: #ff6b35;        /* Orange Red - Services */
-    --service-hover: #e55a2b;        /* Darker Orange - Service hover */
-    
-    /* Business Colors */
-    --expense-color: #ff3366;        /* Pink Red - Expenses */
-    --expense-hover: #e02e5a;        /* Darker Pink - Expense hover */
-    --revenue-color: #00d4ff;        /* Cyan - Revenue */
-    --profit-color: #00ff88;         /* Green - Profit */
-    
-    /* UI Colors */
-    --background-primary: #0a0a0f;   /* Very Dark - Main background */
-    --background-secondary: #1a1a2e; /* Dark Navy - Card backgrounds */
-    --background-tertiary: #16213e;  /* Medium Dark - Section backgrounds */
-    --surface-color: #2a2a3e;        /* Lighter - Surface elements */
-    
-    /* Text Colors */
-    --text-primary: #ffffff;         /* White - Primary text */
-    --text-secondary: #b0b0b0;       /* Light Gray - Secondary text */
-    --text-muted: #808080;           /* Gray - Muted text */
-    --text-accent: #00d4ff;          /* Cyan - Accent text */
-    
-    /* Status Colors */
-    --success-color: #00ff88;        /* Green - Success */
-    --warning-color: #ffaa00;        /* Amber - Warning */
-    --danger-color: #ff3366;         /* Red - Danger */
-    --info-color: #00d4ff;           /* Cyan - Info */
-    
-    /* Interactive Colors */
-    --hover-overlay: rgba(0, 212, 255, 0.1);
-    --active-overlay: rgba(0, 212, 255, 0.2);
-    --focus-glow: 0 0 20px rgba(0, 212, 255, 0.5);
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #0f3460 100%);
-    --gradient-secondary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    --gradient-pc: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-    --gradient-service: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
-    --gradient-expense: linear-gradient(135deg, #ff3366 0%, #e02e5a 100%);
-    
-    /* Shadows */
-    --shadow-primary: 0 4px 20px rgba(0, 212, 255, 0.3);
-    --shadow-secondary: 0 2px 10px rgba(0, 0, 0, 0.5);
-    --shadow-hover: 0 8px 30px rgba(0, 212, 255, 0.4);
-    
+    /* Black Dark Theme Core */
+    --cyber-primary: #00e0ff;        /* Vibrant cyan accent */
+    --cyber-secondary: #0d0f12;      /* Deep near-black */
+    --cyber-accent: #0b0d10;         /* Card base near-black */
+    --cyber-highlight: #11151a;      /* Slightly lighter for headers */
+
+    /* Accent colors */
+    --pc-color: #22ff88;             /* Neon green */
+    --pc-hover: #16d56d;
+    --service-color: #ff784e;        /* Warm orange */
+    --service-hover: #e6603c;
+
+    /* Business colors */
+    --expense-color: #ff3a6b;
+    --expense-hover: #e2325e;
+    --revenue-color: #00e0ff;
+    --profit-color: #22ff88;
+
+    /* UI base */
+    --background-primary: #000000;   /* True black */
+    --background-secondary: #0b0d10; /* Cards */
+    --background-tertiary: #11151a;  /* Headers/stripes */
+    --surface-color: #171b22;        /* Inputs/surfaces */
+
+    /* Text */
+    --text-primary: #e6f1ff;
+    --text-secondary: #9aa7b2;
+    --text-muted: #6b7680;
+    --text-accent: #00e0ff;
+
+    /* Status */
+    --success-color: #22ff88;
+    --warning-color: #ffb000;
+    --danger-color: #ff3a6b;
+    --info-color: #00e0ff;
+
+    /* Interactive */
+    --hover-overlay: rgba(0, 224, 255, 0.08);
+    --active-overlay: rgba(0, 224, 255, 0.16);
+    --focus-glow: 0 0 18px rgba(0, 224, 255, 0.45);
+
+    /* Gradients tuned for black */
+    --gradient-primary: linear-gradient(135deg, #00e0ff 0%, #11151a 100%);
+    --gradient-secondary: linear-gradient(135deg, #0b0d10 0%, #11151a 100%);
+    --gradient-pc: linear-gradient(135deg, #22ff88 0%, #16d56d 100%);
+    --gradient-service: linear-gradient(135deg, #ff784e 0%, #e6603c 100%);
+    --gradient-expense: linear-gradient(135deg, #ff3a6b 0%, #e2325e 100%);
+
+    /* Shadows subtle on black */
+    --shadow-primary: 0 6px 24px rgba(0, 224, 255, 0.22);
+    --shadow-secondary: 0 2px 14px rgba(0, 0, 0, 0.8);
+    --shadow-hover: 0 10px 36px rgba(0, 224, 255, 0.28);
+
     /* Borders */
-    --border-primary: 1px solid rgba(0, 212, 255, 0.3);
-    --border-secondary: 1px solid rgba(255, 255, 255, 0.1);
+    --border-primary: 1px solid rgba(0, 224, 255, 0.28);
+    --border-secondary: 1px solid rgba(255, 255, 255, 0.06);
     --border-accent: 2px solid var(--cyber-primary);
 }
 
@@ -69,8 +69,8 @@ body {
     line-height: 1.6;
     background-attachment: fixed;
     background-image: 
-        radial-gradient(circle at 25% 25%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+        radial-gradient(circle at 20% 20%, rgba(0, 224, 255, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(34, 255, 136, 0.04) 0%, transparent 45%);
 }
 
 /* Scrollbar Styling */
@@ -280,6 +280,29 @@ body {
     position: relative;
 }
 
+/* Keep navbar items on one line */
+.navbar .navbar-nav {
+    flex-wrap: nowrap !important;
+    justify-content: center;
+    width: 100%;
+}
+
+.navbar .nav-link,
+.navbar-brand {
+    white-space: nowrap !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+.navbar-brand i {
+    margin-right: 0.5rem; /* extra space between icon and text */
+}
+
+/* Add a bit of space between nav icons and labels */
+.navbar .nav-link i {
+    margin-right: 0.4rem;
+}
+
 /* Ensure all dropdowns appear in front */
 .navbar .dropdown {
     position: relative;
@@ -296,6 +319,9 @@ body {
     color: var(--cyber-primary) !important;
     text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .navbar-brand:hover {
@@ -690,6 +716,93 @@ body {
     overflow: hidden;
     background: var(--background-secondary);
     color: var(--text-primary);
+}
+
+/* Cyber themed table enhancements */
+.table.table-rounded {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.table.table-cyber thead.table-dark th {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+    border-bottom: var(--border-secondary);
+}
+
+.table.table-cyber tbody tr {
+    background: var(--background-secondary);
+}
+
+.table.table-cyber tbody tr:hover {
+    background: var(--hover-overlay);
+}
+
+.table.table-cyber td, .table.table-cyber th {
+    vertical-align: middle;
+}
+
+/* Force Bootstrap table CSS variables to our dark theme */
+.table.table-cyber {
+    --bs-table-bg: var(--background-secondary) !important;
+    --bs-table-color: var(--text-primary) !important;
+    --bs-table-striped-bg: var(--background-tertiary) !important;
+    --bs-table-striped-color: var(--text-primary) !important;
+    --bs-table-hover-bg: var(--hover-overlay) !important;
+    --bs-table-hover-color: var(--text-primary) !important;
+    --bs-table-border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Ensure cells don't revert to white */
+.table.table-cyber tbody td,
+.table.table-cyber tbody th {
+    background: var(--background-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Index column darker strip */
+.table.table-cyber tbody th.index-col,
+.table.table-cyber thead th.index-col {
+    background: var(--background-tertiary) !important;
+}
+
+/* Ensure inner text elements don't get unintended label backgrounds */
+.table.table-cyber td span:not(.badge):not(.badge-amount-negative),
+.table.table-cyber td small,
+.table.table-cyber td strong,
+.table.table-cyber td em {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    color: var(--text-primary);
+}
+
+/* Muted helper text inside tables */
+.table.table-cyber td small.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Index column pill style */
+.index-col {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+    border-right: var(--border-secondary);
+    width: 48px;
+    text-align: center;
+}
+
+/* Amount badge style */
+.badge-amount-negative {
+    background: var(--gradient-expense) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--danger-color) !important;
+}
+
+/* Table footer highlight */
+.table-total-footer {
+    background: var(--surface-color);
 }
 
 .table th {

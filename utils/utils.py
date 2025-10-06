@@ -1,6 +1,6 @@
 from nextcord import Button, ButtonStyle, SelectOption,Interaction,Embed,TextInputStyle
 import nextcord
-from datetime import datetime
+from datetime import datetime, time
 import os, json
 import utils.database as db
 from nextcord.ui import Select,View,Modal,TextInput
@@ -493,3 +493,14 @@ def calc_totals(data):
     for record in data['expenses']:
         total_expense += record['amount']
     return total_pc,total_service,total_expense,(total_pc + total_service - total_expense)
+
+def get_current_period():
+    now = datetime.now().time()
+    morning_start = time(8, 0)
+    evening_start = time(16, 0)
+    midnight = time(0, 0)
+    # Morning: 08:00 <= now < 16:00
+    if morning_start <= now < evening_start:
+        return 'morning'
+    # Evening: 16:00 <= now <= 23:59:59
+    return 'evening'
