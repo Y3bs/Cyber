@@ -1327,4 +1327,9 @@ def search_records():
     return render_template('search_records.html', query=query, results=results)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        import threading, webbrowser
+        threading.Timer(1.0, lambda: webbrowser.open('http://127.0.0.1:5000')).start()
+    except Exception:
+        pass
+    app.run(debug=True, host='127.0.0.1', port=5000)

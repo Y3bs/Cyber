@@ -22,13 +22,13 @@ try:
     db = MongoClient(DB_TOKEN)
     # Test connection
     db.admin.command('ping')
-    print("✅ Connected to MongoDB successfully!")
+    print("Connected to MongoDB successfully!")
     try:
         db.cyber.users.create_index("username", unique=True)
     except Exception:
         pass
 except Exception as e:
-    print(f"❌ MongoDB connection failed: {e}")
+    print(f"MongoDB connection failed: {e}")
     print("Please check your DB_TOKEN in the .env file")
     raise e
 
