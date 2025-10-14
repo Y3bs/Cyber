@@ -247,36 +247,36 @@ def pc_logging():
 def log_pc():
     """Handle PC session logging"""
     try:
-        pc_number = request.form.get('pc_number')
+        # Accept multiple PC numbers
+        pc_numbers = request.form.getlist('pc_numbers') or []
+        single_pc = request.form.get('pc_number')
+        if single_pc and not pc_numbers:
+            pc_numbers = [single_pc]
         cost = int(request.form.get('cost'))
         notes = request.form.get('notes', '')
         staff = (session.get('user') or {}).get('username', 'Web User')
         
-        if not pc_number or cost <= 0:
-            flash('Please provide valid PC number and cost', 'error')
+        if not pc_numbers or cost <= 0:
+            flash('Please select at least one PC and provide a valid cost', 'error')
             return redirect(url_for('pc_logging'))
         
-        # Generate unique session ID
+        # Log each selected PC
         import uuid
-        session_id = str(uuid.uuid4())
-        
-        # Log the session to JSON only
         data = load_data()
         today_full = datetime.now().strftime("%d %b %Y %I:%M %p")
-        
-        session_data = {
-            "session_id": session_id,
-            "pc": f"PC {pc_number}",
-            "amount": cost,
-            "staff": staff,
-            "time": today_full,
-            "period": get_current_period()
-        }
-        
-        if notes:
-            session_data['notes'] = notes
-        
-        data["pcs"].append(session_data)
+        for pc in pc_numbers:
+            session_id = str(uuid.uuid4())
+            session_data = {
+                "session_id": session_id,
+                "pc": f"PC {pc}",
+                "amount": cost,
+                "staff": staff,
+                "time": today_full,
+                "period": get_current_period()
+            }
+            if notes:
+                session_data['notes'] = notes
+            data["pcs"].append(session_data)
         
         # Update totals
         pcs_total, services_total, expenses_total, total_all = calc_totals(data)
@@ -290,7 +290,10 @@ def log_pc():
         save_data(data)
         
         session_time = cost_to_time(cost)
-        flash(f'PC {pc_number} session logged successfully! Time equivalent: {session_time}', 'success')
+        if len(pc_numbers) == 1:
+            flash(f'PC {pc_numbers[0]} session logged successfully! Time equivalent: {session_time}', 'success')
+        else:
+            flash(f'{len(pc_numbers)} PC sessions logged successfully! Time equivalent per PC: {session_time}', 'success')
         
     except ValueError:
         flash('Cost must be a valid number', 'error')
@@ -679,7 +682,18 @@ def save_logs_route():
 def download_pdf(date):
     """Download PDF report for a specific date"""
     try:
-        filename = f"daily_report_{date}.pdf"
+        base_dir = None
+        try:
+            import sys
+            if getattr(sys, 'frozen', False):
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                base_dir = os.path.abspath(os.path.dirname(__file__))
+        except Exception:
+            base_dir = os.getcwd()
+
+        reports_dir = os.path.join(base_dir, 'reports')
+        filename = os.path.join(reports_dir, f"daily_report_{date}.pdf")
         if os.path.exists(filename):
             return send_file(filename, as_attachment=True)
         else:

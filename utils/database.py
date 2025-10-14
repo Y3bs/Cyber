@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pprint import pprint
 import json
 from datetime import datetime, timezone
+import sys
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -318,10 +319,22 @@ def delete_user(username: str):
         return False
 
 # PDF Report Generation
+def _get_app_base_dir():
+    try:
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        return os.path.abspath(os.path.dirname(__file__))
+    except Exception:
+        return os.getcwd()
+
+
 def generate_daily_pdf_report(data):
     try:
         date_str = data.get("date", datetime.now().strftime("%Y-%m-%d"))
-        filename = f"daily_report_{date_str}.pdf"
+        base_dir = _get_app_base_dir()
+        reports_dir = os.path.join(base_dir, "reports")
+        os.makedirs(reports_dir, exist_ok=True)
+        filename = os.path.join(reports_dir, f"daily_report_{date_str}.pdf")
         
         doc = SimpleDocTemplate(filename, pagesize=A4)
         styles = getSampleStyleSheet()

@@ -1,0 +1,85 @@
+{
+    "pcs": [
+        {
+            "session_id": "d88f52ab-d726-4365-aab1-e3569d942dd7",
+            "pc": "PC 6",
+            "amount": 20,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 04:25 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "d5bb6fc4-39cb-4144-8837-ecfc5b309f6e",
+            "pc": "PC 14",
+            "amount": 20,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 04:32 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "542e23af-9f08-4052-b759-646ac455dd28",
+            "pc": "PC 13",
+            "amount": 10,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 04:40 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "ee908fdd-ee73-43b4-99df-63f2b87d231f",
+            "pc": "PC 5",
+            "amount": 5,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:19 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "49101df2-a275-4805-9c79-09298ce68c36",
+            "pc": "PC 12",
+            "amount": 10,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:28 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "782f4cdb-c6c5-43a2-8f45-5cd3832ba5de",
+            "pc": "PC 8",
+            "amount": 55,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:37 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "cd9c1a39-d2c8-4f5f-98cd-b146d257ea91",
+            "pc": "PC 4",
+            "amount": 90,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:38 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "11dd9a80-8ea4-4fb0-9a73-09430bd154fd",
+            "pc": "PC 11",
+            "amount": 25,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:38 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "30d9dcc6-f2c3-479e-b97a-67383aefa8d6",
+            "pc": "PC 2",
+            "amount": 20,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 05:52 PM",
+            "period": "evening"
+        }
+    ],
+    "services": [],
+    "expenses": [],
+    "totals": {
+        "pcs": 255,
+        "services": 0,
+        "expenses": 0,
+        "all": 255
+    },
+    "log_channel_id": null
+}

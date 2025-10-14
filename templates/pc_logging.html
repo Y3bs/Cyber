@@ -19,15 +19,15 @@
                 <form action="{{ url_for('log_pc') }}" method="POST">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="pc_number" class="form-label">
-                                <i class="fas fa-desktop"></i> PC Number
+                            <label for="pc_numbers" class="form-label">
+                                <i class="fas fa-desktop"></i> PC Number(s)
                             </label>
-                            <select class="form-select" id="pc_number" name="pc_number" required>
-                                <option value="">Select a PC...</option>
+                            <select class="form-select" id="pc_numbers" name="pc_numbers" multiple size="8" required>
                                 {% for i in range(1, 15) %}
                                     <option value="{{ i }}">💻 PC {{ i }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="form-text"><i class="fas fa-keyboard"></i> Hold Ctrl to select multiple PCs</div>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -43,8 +43,6 @@
                     </div>
 
                     <div class="row">
-                        
-
                         <div class="col-md-6 mb-3">
                             <label for="notes" class="form-label">
                                 <i class="fas fa-sticky-note"></i> Notes (Optional)
@@ -82,7 +80,7 @@
                     {% for i in range(1, 15) %}
                         <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
                             <button type="button" class="btn btn-outline-primary btn-block pc-select-btn" 
-                                    data-pc="{{ i }}" onclick="selectPC({{ i }})">
+                                    data-pc="{{ i }}" onclick="togglePC({{ i }})">
                                 <i class="fas fa-desktop"></i><br>
                                 <span class="small">PC {{ i }}</span>
                             </button>
@@ -91,7 +89,7 @@
                 </div>
                 <div class="alert alert-info mt-3">
                     <i class="fas fa-info-circle"></i>
-                    <strong>Quick Select:</strong> Click on any PC above to automatically select it in the form.
+                    <strong>Quick Select:</strong> Click PCs above to toggle selection. Use Ctrl to multi-select in the list.
                 </div>
             </div>
         </div>
@@ -128,20 +126,20 @@
 
 {% block extra_js %}
 <script>
-function selectPC(pcNumber) {
-    // Update the dropdown
-    document.getElementById('pc_number').value = pcNumber;
-    
-    // Update visual feedback
-    document.querySelectorAll('.pc-select-btn').forEach(btn => {
+function togglePC(pcNumber) {
+    const select = document.getElementById('pc_numbers');
+    const option = Array.from(select.options).find(o => o.value === String(pcNumber));
+    if (!option) return;
+    option.selected = !option.selected;
+    const btn = document.querySelector(`[data-pc="${pcNumber}"]`);
+    if (!btn) return;
+    if (option.selected) {
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-primary');
+    } else {
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-outline-primary');
-    });
-    
-    document.querySelector(`[data-pc="${pcNumber}"]`).classList.remove('btn-outline-primary');
-    document.querySelector(`[data-pc="${pcNumber}"]`).classList.add('btn-primary');
-    
-    // Focus on cost input
+    }
     document.getElementById('cost').focus();
 }
 
