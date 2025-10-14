@@ -592,10 +592,26 @@ def log_expense():
 @app.route('/history')
 @login_required
 def history():
-    """View historical logs from database"""
+    """View historical logs from database - current month only"""
     try:
-        # Get logs from database
-        logs = list(db.cyber.logs.find({}, {"_id": 0}).sort("date", -1))
+        from datetime import datetime
+        
+        # Get current month and year
+        now = datetime.now()
+        current_month = now.month
+        current_year = now.year
+        
+        # Create date range for current month
+        start_date = f"{current_year}-{current_month:02d}-01"
+        end_date = f"{current_year}-{current_month:02d}-31"
+        
+        # Get logs from database filtered by current month
+        logs = list(db.cyber.logs.find({
+            "date": {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        }, {"_id": 0}).sort("date", -1))
         
         # Ensure all logs have required fields with defaults
         for log in logs:

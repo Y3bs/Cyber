@@ -1,12 +1,53 @@
 {
-    "pcs": [],
+    "pcs": [
+        {
+            "session_id": "dbe8b818-9fb1-448a-a12f-a2d586d658c8",
+            "pc": "PC 1",
+            "amount": 10,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 06:38 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "a809e6f6-01ba-4b04-9146-cfc985f3c94a",
+            "pc": "PC 2",
+            "amount": 10,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 06:38 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "63a79aec-5c5a-49aa-ad01-0806a0b90edf",
+            "pc": "PC 3",
+            "amount": 10,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 06:38 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "839f4b4a-6e85-4cdb-a1d3-c7e73676d2bc",
+            "pc": "PC 1",
+            "amount": 15,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 07:23 PM",
+            "period": "evening"
+        },
+        {
+            "session_id": "ea3859cd-6723-45af-98d8-6f906b9c3340",
+            "pc": "PC 3",
+            "amount": 15,
+            "staff": "-O_O",
+            "time": "14 Oct 2025 07:23 PM",
+            "period": "evening"
+        }
+    ],
     "services": [],
     "expenses": [],
     "totals": {
-        "pcs": 0,
+        "pcs": 60,
         "services": 0,
         "expenses": 0,
-        "all": 0
+        "all": 60
     },
     "log_channel_id": null
 }

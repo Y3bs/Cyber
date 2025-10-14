@@ -1,189 +1,342 @@
-{% extends "base.html" %}
-
-{% block title %}PC Session Logging - Cyber Cafe Management{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}PC Session Logging - Cyber Cafe
+Management{% endblock %} {% block content %}
 <div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-desktop"></i> PC Session Logging Panel
-                </h6>
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow">
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-desktop"></i> PC Session Logging Panel
+        </h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-4">
+          Use this panel to log any PC session. Select the PC below and enter
+          session details.
+        </p>
+
+        <form action="{{ url_for('log_pc') }}" method="POST">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="pc_numbers" class="form-label">
+                <i class="fas fa-desktop"></i> PC Number(s)
+              </label>
+              <div class="pc-select-wrap position-relative">
+                <select
+                  class="pc-select-hidden pc-select-list"
+                  id="pc_numbers"
+                  name="pc_numbers"
+                  multiple
+                  size="1"
+                  required
+                ></select>
+                <div id="pc_badges" class="pc-badges-inside pc-token-box"></div>
+              </div>
+              <div class="form-text">
+                <i class="fas fa-mouse-pointer"></i>
+                Select PCs from the grid below; this list shows chosen PCs only.
+                Hold Ctrl to multi-select here.
+              </div>
             </div>
-            <div class="card-body">
-                <p class="text-muted mb-4">
-                    Use this panel to log any PC session. Select the PC below and enter session details.
-                </p>
 
-                <form action="{{ url_for('log_pc') }}" method="POST">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="pc_numbers" class="form-label">
-                                <i class="fas fa-desktop"></i> PC Number(s)
-                            </label>
-                            <select class="form-select" id="pc_numbers" name="pc_numbers" multiple size="8" required>
-                                {% for i in range(1, 15) %}
-                                    <option value="{{ i }}">💻 PC {{ i }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text"><i class="fas fa-keyboard"></i> Hold Ctrl to select multiple PCs</div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="cost" class="form-label">
-                                <i class="fas fa-money-bill"></i> Cost (EGP)
-                            </label>
-                            <input type="number" class="form-control" id="cost" name="cost" 
-                                   placeholder="Enter amount in EGP" min="1" required>
-                            <div class="form-text">
-                                <i class="fas fa-clock"></i> Time equivalent will be calculated automatically (1 EGP = 6 minutes)
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="notes" class="form-label">
-                                <i class="fas fa-sticky-note"></i> Notes (Optional)
-                            </label>
-                            <input type="text" class="form-control" id="notes" name="notes" 
-                                   placeholder="Additional notes...">
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">
-                            <i class="fas fa-arrow-left"></i> Back to Dashboard
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Log PC Session
-                        </button>
-                    </div>
-                </form>
+            <div class="col-md-6 mb-3">
+              <label for="cost" class="form-label">
+                <i class="fas fa-money-bill"></i> Cost (EGP)
+              </label>
+              <input
+                type="number"
+                class="form-control"
+                id="cost"
+                name="cost"
+                placeholder="Enter amount in EGP"
+                min="1"
+                required
+              />
+              <div class="form-text">
+                <i class="fas fa-clock"></i> Time equivalent will be calculated
+                automatically (1 EGP = 6 minutes)
+              </div>
             </div>
-        </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="notes" class="form-label">
+                <i class="fas fa-sticky-note"></i> Notes (Optional)
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="notes"
+                name="notes"
+                placeholder="Additional notes..."
+              />
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a
+              href="{{ url_for('dashboard') }}"
+              class="btn btn-secondary me-md-2"
+            >
+              <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Log PC Session
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- PC Grid Display -->
 <div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-th-large"></i> PC Selection Grid
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for i in range(1, 15) %}
-                        <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-block pc-select-btn" 
-                                    data-pc="{{ i }}" onclick="togglePC({{ i }})">
-                                <i class="fas fa-desktop"></i><br>
-                                <span class="small">PC {{ i }}</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Quick Select:</strong> Click PCs above to toggle selection. Use Ctrl to multi-select in the list.
-                </div>
-            </div>
+  <div class="col-12">
+    <div class="card shadow">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-th-large"></i> PC Selection Grid
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          {% for i in range(1, 15) %}
+          <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-block pc-select-btn"
+              data-pc="{{ i }}"
+              onclick="togglePC(event, {{ i }})"
+            >
+              <i class="fas fa-desktop"></i><br />
+              <span class="small">PC {{ i }}</span>
+            </button>
+          </div>
+          {% endfor %}
         </div>
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-info-circle"></i>
+          <strong>Quick Select:</strong> Click PCs above to toggle selection.
+          Use Ctrl to multi-select in the list.
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Cost Calculator -->
 <div class="row mt-4">
-    <div class="col-lg-6 mx-auto">
-        <div class="card shadow border-info">
-            <div class="card-header bg-info text-white py-3">
-                <h6 class="m-0 font-weight-bold">
-                    <i class="fas fa-calculator"></i> Time Calculator
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="calc_cost" class="form-label">Enter Cost (EGP):</label>
-                    <input type="number" class="form-control" id="calc_cost" 
-                           placeholder="Enter amount" min="1" oninput="calculateTime()">
-                </div>
-                <div class="alert alert-light" id="time_result">
-                    <i class="fas fa-clock"></i> Time equivalent will appear here...
-                </div>
-                <div class="text-muted small">
-                    <i class="fas fa-info-circle"></i> 
-                    Rate: 1 EGP = 6 minutes | 10 EGP = 1 hour
-                </div>
-            </div>
+  <div class="col-lg-6 mx-auto">
+    <div class="card shadow border-info">
+      <div class="card-header bg-info text-white py-3">
+        <h6 class="m-0 font-weight-bold">
+          <i class="fas fa-calculator"></i> Time Calculator
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="calc_cost" class="form-label">Enter Cost (EGP):</label>
+          <input
+            type="number"
+            class="form-control"
+            id="calc_cost"
+            placeholder="Enter amount"
+            min="1"
+            oninput="calculateTime()"
+          />
         </div>
+        <div class="alert alert-light" id="time_result">
+          <i class="fas fa-clock"></i> Time equivalent will appear here...
+        </div>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle"></i>
+          Rate: 1 EGP = 6 minutes | 10 EGP = 1 hour
+        </div>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-function togglePC(pcNumber) {
-    const select = document.getElementById('pc_numbers');
-    const option = Array.from(select.options).find(o => o.value === String(pcNumber));
-    if (!option) return;
-    option.selected = !option.selected;
+  function togglePC(e, pcNumber) {
+    const select = document.getElementById("pc_numbers");
+    const isCtrl = e && (e.ctrlKey || e.metaKey);
     const btn = document.querySelector(`[data-pc="${pcNumber}"]`);
     if (!btn) return;
-    if (option.selected) {
-        btn.classList.remove('btn-outline-primary');
-        btn.classList.add('btn-primary');
+
+    // Check if PC is already selected
+    const existingOption = Array.from(select.options).find(
+      (o) => o.value === String(pcNumber)
+    );
+
+    if (!isCtrl) {
+      // Single select mode
+      if (existingOption) {
+        // PC is selected - deselect it (clear all)
+        while (select.options.length > 0) {
+          select.remove(0);
+        }
+        // Clear all button states
+        document.querySelectorAll(".pc-select-btn").forEach((b) => {
+          b.classList.remove("btn-primary", "pc-selected");
+          b.classList.add("btn-outline-primary");
+        });
+        resizeAndSortPCSelect(select);
+      } else {
+        // PC not selected - select only this one (clear all, then add)
+        while (select.options.length > 0) {
+          select.remove(0);
+        }
+        // Clear all button states
+        document.querySelectorAll(".pc-select-btn").forEach((b) => {
+          b.classList.remove("btn-primary", "pc-selected");
+          b.classList.add("btn-outline-primary");
+        });
+        // Add only the clicked PC
+        const option = document.createElement("option");
+        option.value = String(pcNumber);
+        option.textContent = `💻 PC ${pcNumber}`;
+        option.selected = true;
+        select.appendChild(option);
+        resizeAndSortPCSelect(select);
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-primary", "pc-selected");
+      }
     } else {
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-primary');
+      // Multi-select toggle mode
+      if (!existingOption) {
+        // Add PC
+        const option = document.createElement("option");
+        option.value = String(pcNumber);
+        option.textContent = `💻 PC ${pcNumber}`;
+        option.selected = true;
+        select.appendChild(option);
+        resizeAndSortPCSelect(select);
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-primary", "pc-selected");
+      } else {
+        // Remove PC
+        select.removeChild(existingOption);
+        resizeAndSortPCSelect(select);
+        btn.classList.remove("btn-primary", "pc-selected");
+        btn.classList.add("btn-outline-primary");
+      }
     }
-    document.getElementById('cost').focus();
-}
+    document.getElementById("cost").focus();
+  }
 
-// staff selection removed; staff is tied to logged-in user
+  // staff selection removed; staff is tied to logged-in user
 
-function calculateTime() {
-    const cost = parseInt(document.getElementById('calc_cost').value);
-    const resultDiv = document.getElementById('time_result');
-    
+  function calculateTime() {
+    const cost = parseInt(document.getElementById("calc_cost").value);
+    const resultDiv = document.getElementById("time_result");
+
     if (cost && cost > 0) {
-        const minutes = cost * 6;
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
-        
-        let timeString = '';
-        if (hours > 0) {
-            timeString += `${hours}h `;
-        }
-        if (remainingMinutes > 0) {
-            timeString += `${remainingMinutes}m`;
-        }
-        
-        resultDiv.innerHTML = `<i class="fas fa-clock text-success"></i> <strong>${timeString}</strong> for ${cost} EGP`;
-        resultDiv.className = 'alert alert-success';
-    } else {
-        resultDiv.innerHTML = '<i class="fas fa-clock"></i> Time equivalent will appear here...';
-        resultDiv.className = 'alert alert-light';
-    }
-}
+      const minutes = cost * 6;
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
 
-// Real-time cost calculation in main form
-document.getElementById('cost').addEventListener('input', function() {
+      let timeString = "";
+      if (hours > 0) {
+        timeString += `${hours}h `;
+      }
+      if (remainingMinutes > 0) {
+        timeString += `${remainingMinutes}m`;
+      }
+
+      resultDiv.innerHTML = `<i class="fas fa-clock text-success"></i> <strong>${timeString}</strong> for ${cost} EGP`;
+      resultDiv.className = "alert alert-success";
+    } else {
+      resultDiv.innerHTML =
+        '<i class="fas fa-clock"></i> Time equivalent will appear here...';
+      resultDiv.className = "alert alert-light";
+    }
+  }
+
+  // Real-time cost calculation in main form
+  document.getElementById("cost").addEventListener("input", function () {
     calculateTime();
     // Also update the calculator if it's empty
-    if (!document.getElementById('calc_cost').value) {
-        document.getElementById('calc_cost').value = this.value;
+    if (!document.getElementById("calc_cost").value) {
+      document.getElementById("calc_cost").value = this.value;
     }
-});
+  });
 
-// Sync calculator with main form
-document.getElementById('calc_cost').addEventListener('input', function() {
-    if (!document.getElementById('cost').value) {
-        document.getElementById('cost').value = this.value;
+  // Sync calculator with main form
+  document.getElementById("calc_cost").addEventListener("input", function () {
+    if (!document.getElementById("cost").value) {
+      document.getElementById("cost").value = this.value;
     }
-});
+  });
+
+  // On load, ensure grid starts unselected; select list starts empty as rendered
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".pc-select-btn").forEach((btn) => {
+      btn.classList.remove("btn-primary", "pc-selected");
+      btn.classList.add("btn-outline-primary");
+    });
+    resizeAndSortPCSelect(document.getElementById("pc_numbers"));
+  });
+
+  function resizeAndSortPCSelect(select) {
+    if (!select) return;
+    // sort numerically by value
+    const options = Array.from(select.options);
+    options.sort((a, b) => parseInt(a.value) - parseInt(b.value));
+    // re-append in sorted order
+    options.forEach((opt) => select.appendChild(opt));
+    // adjust visible token box height implicitly via wrapping
+    const count = options.length;
+    // rebuild badges and sync button states
+    syncBadgesWithSelect(select);
+    syncButtonStates(select);
+  }
+
+  function syncButtonStates(select) {
+    const selectedValues = new Set(
+      Array.from(select.options).map((o) => o.value)
+    );
+    document.querySelectorAll(".pc-select-btn").forEach((btn) => {
+      const val = String(btn.getAttribute("data-pc"));
+      if (selectedValues.has(val)) {
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-primary", "pc-selected");
+      } else {
+        btn.classList.remove("btn-primary", "pc-selected");
+        btn.classList.add("btn-outline-primary");
+      }
+    });
+  }
+
+  function syncBadgesWithSelect(select) {
+    const container = document.getElementById("pc_badges");
+    if (!container) return;
+    container.innerHTML = "";
+    const options = Array.from(select.options);
+
+    // Create badges for selected PCs
+    options.forEach((opt) => {
+      const badge = document.createElement("span");
+      badge.className = "badge bg-success me-1 mb-1 pc-badge";
+      badge.innerHTML = `<i class="fas fa-desktop me-1"></i>PC ${opt.value} <span class="pc-badge-remove ms-1">&times;</span>`;
+      badge.dataset.pc = opt.value;
+      container.appendChild(badge);
+    });
+
+    // attach removal
+    container.querySelectorAll(".pc-badge .pc-badge-remove").forEach((rem) => {
+      rem.addEventListener("click", function () {
+        const pcVal = this.parentElement.dataset.pc;
+        const toRemove = Array.from(select.options).find(
+          (o) => o.value === pcVal
+        );
+        if (toRemove) select.removeChild(toRemove);
+        resizeAndSortPCSelect(select);
+      });
+    });
+  }
 </script>
 {% endblock %}
